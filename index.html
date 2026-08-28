@@ -1383,6 +1383,67 @@
   setHint();
   var openBtn = document.getElementById('open');
 
+  // =================================================================
+  // Browser history
+  //
+  // The greeting and the present are two views of one document. Give them
+  // distinct same-URL history entries so the browser's Back/Forward controls
+  // mirror the on-page controls without reloading the WebGL scene.
+  // =================================================================
+  var HISTORY_VIEW_KEY = 'roseView';
+
+  function viewFromHistory(state) {
+    return state && state[HISTORY_VIEW_KEY] === 'present' ? 'present' : 'greeting';
+  }
+
+  var desiredView = viewFromHistory(history.state);
+
+  function writeHistoryView(view, replace) {
+    var state = history.state && typeof history.state === 'object'
+      ? Object.assign({}, history.state) : {};
+    state[HISTORY_VIEW_KEY] = view;
+    try {
+      history[replace ? 'replaceState' : 'pushState'](state, '');
+      return true;
+    } catch (_) {
+      // The animation still works when History API access is restricted.
+      return false;
+    }
+  }
+
+  // A normal first visit is the greeting. A reload of an existing present
+  // entry keeps that entry, so Back/Forward still restores the right view.
+  if (desiredView !== 'present') {
+    desiredView = 'greeting';
+    writeHistoryView('greeting', true);
+  }
+
+  function syncToDesiredView() {
+    if (desiredView === 'present' && act === ACT.GATE) beginOpening();
+    else if (desiredView === 'greeting' && act === ACT.SETTLED) beginClosing();
+  }
+
+  function showPresent() {
+    desiredView = 'present';
+    if (viewFromHistory(history.state) !== 'present') writeHistoryView('present', false);
+    syncToDesiredView();
+  }
+
+  function showGreeting() {
+    desiredView = 'greeting';
+    if (viewFromHistory(history.state) === 'present') {
+      history.back();                    // leaves a Forward entry for the present
+      return;
+    }
+    writeHistoryView('greeting', true);  // fallback if History API was unavailable
+    syncToDesiredView();
+  }
+
+  window.addEventListener('popstate', function (e) {
+    desiredView = viewFromHistory(e.state);
+    syncToDesiredView();
+  });
+
   function beginOpening() {
     if (act !== ACT.GATE) return;
     act = ACT.OPENING;                 // locked immediately: a second click is a no-op
@@ -1397,8 +1458,8 @@
     rose.visible = true;
     letterEl.setAttribute('aria-hidden', 'false');
   }
-  openBtn.addEventListener('click', beginOpening);
-  document.getElementById('back').addEventListener('click', function () { beginClosing(); });
+  openBtn.addEventListener('click', showPresent);
+  document.getElementById('back').addEventListener('click', showGreeting);
   toggleEl.addEventListener('click', function () {
     applyTheme(THEME_NAME === 'dark' ? 'light' : 'dark', true);
   });
@@ -1447,7 +1508,11 @@
       toggleEl.classList.remove('alone');
     }
 
-    if (u >= 1) { act = ACT.SETTLED; vel.theta = IDLE_SPIN / 60; }
+    if (u >= 1) {
+      act = ACT.SETTLED;
+      vel.theta = IDLE_SPIN / 60;
+      syncToDesiredView();
+    }
   }
 
   // ---------------------------------------------------------------
@@ -1492,6 +1557,7 @@
       rose.scale.setScalar(1);
       vel.theta = vel.phi = 0;
       openU = 0;
+      syncToDesiredView();
     }
   }
 
@@ -1778,6 +1844,7 @@
 
     Post.render();
     requestAnimationFrame(tick);
+    syncToDesiredView();
   } catch (e) {
     fail('render failed: ' + (e && e.message ? e.message : e));
   }
