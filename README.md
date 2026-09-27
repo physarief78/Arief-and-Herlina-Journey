@@ -1,36 +1,55 @@
 # Arief & Herlina Journey
 
-A small site for the story of Arief and Herlina. It opens on a title screen, moves to a landing page with a photograph, an introduction and a menu of chapters, and the first chapter is a commitment letter from Arief to Herlina, presented beside an interactive rose rendered in the browser with Three.js.
+A small place for the story of Arief and Herlina — two people who met at Unpad and chose to commit to each other.
 
-[Open the site](https://physarief78.github.io/Arief-and-Herlina-Journey/)
+**[Open the site →](https://physarief78.github.io/Arief-and-Herlina-Journey/)**
+
+## What's inside
+
+The site moves through three screens, with sakura petals and blossoms drifting through all of them.
+
+1. **Cover** — *Arief & Herlina Journey* and a **Let's Get Started** button.
+2. **Our story** — a photograph from Benteng Vredeburg, Yogyakarta, a short introduction, and a menu of chapters.
+3. **A Commitment Letter** — the first chapter: a letter from Arief to Herlina, beside a 3D rose that blooms as it opens. Drag to turn her.
+
+Some small touches:
+
+- Click or tap anywhere, on any screen, for a burst of petals. They fly out in front of the page and then drift in behind it.
+- There are no on-screen back buttons. The browser's or phone's own Back and Forward move between the three screens, each with its own transition.
+- The layout adapts to phones: the photo stacks above the words, and the letter sits below the rose.
+- The page asks search engines not to index it (`robots.txt` and a robots meta tag).
 
 ## Run locally
 
-Open `index.html` directly, or start the small local server:
+Open `index.html` in a browser, or serve the folder:
 
 ```sh
 python devserver.py
 ```
 
-## Rebuild
+## Editing
 
-The generator has no Julia package dependencies. It combines the page template, rose geometry, and vendored Three.js runtime into one `index.html`:
+`index.html` is generated — edit `template_present.html` (page text, styling, and interaction) or `rose_geometry.js` (the rose), then rebuild. The generator has no Julia package dependencies; it inlines the template, the rose geometry, and the vendored Three.js runtime into one `index.html`:
 
 ```sh
 julia rose_present.jl
 node verify_geometry.js
 ```
 
-`build/golden.json` and `build/rose_params.json` are committed fixtures so the geometry cross-check can run in CI using Node.js alone.
+- **Change the photo:** replace `assets/journey.jpg`, and update its caption in the template's `.photo` figure.
+- **Add a chapter:** add another `.chapter` button inside the `.menu` in the template.
 
-## Main files
+`build/golden.json` and `build/rose_params.json` are committed fixtures, so the geometry cross-check runs in CI with Node.js alone.
 
-- `index.html` — generated site served by GitHub Pages (Three.js is inlined; the landing photo is loaded from `assets/`)
-- `assets/journey.jpg` — the landing-page photograph
-- `template_present.html` — page structure, styling, and interaction source
-- `rose_present.jl` — generator and reference Julia geometry
-- `rose_geometry.js` — browser-side geometry implementation
-- `verify_geometry.js` — Julia/JavaScript geometry consistency check
-- `vendor/three.min.js` — vendored rendering runtime embedded by the generator
+## Files
 
-The site asks search engines not to index it through both `robots.txt` and an HTML robots meta tag.
+| File | Purpose |
+|---|---|
+| `index.html` | The generated site served by GitHub Pages |
+| `template_present.html` | Page structure, text, styling, and interaction |
+| `assets/journey.jpg` | The photograph on the story page |
+| `rose_geometry.js` | Browser-side rose geometry |
+| `rose_present.jl` | Generator and reference Julia geometry |
+| `verify_geometry.js` | Julia/JavaScript geometry consistency check |
+| `vendor/three.min.js` | Three.js runtime, inlined by the generator |
+| `devserver.py` | Local preview server |

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-devserver.py -- local preview server used while building the present.
+devserver.py -- local preview server used while building the site.
 
 Serves this folder over HTTP and, unlike a plain `python -m http.server`,
 accepts the rendered canvas back:
@@ -11,7 +11,7 @@ accepts the rendered canvas back:
 The page can only hand a frame back through the same origin it was served
 from, so the upload endpoint lives here rather than on a second port.
 
-This is build tooling only -- it is not part of Happy_Birthday_Erlin.html,
+This is build tooling only -- it is not part of index.html,
 which is a single self-contained file and needs no server at all.
 
     python devserver.py [port]
