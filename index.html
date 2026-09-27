@@ -882,10 +882,14 @@
     // fifth of this. (Pinned to the camera, 48 was plenty.)
     // Roughly a third are whole blossoms rather than loose petals; the rest
     // are the petals they shed.
-    var NP = 168;
+    // The box reaches well below the rose: the camera looks down on her, so a
+    // floor any higher is on screen, and petals were seen blinking out as they
+    // crossed it. More petals to keep the same density over the deeper box.
+    var NP = 238;
     var BLOSSOM_SHARE = 0.32;
     var P_R = 4.2;      // half-width of the box they fall through
-    var P_H = 3.0;      // half-height
+    var P_H = 3.0;      // top of the box
+    var P_BOT = 5.5;    // depth of the floor below the rose
     var pPos  = new Float32Array(NP * 3);   // world space, centred on the rose
     var pRot  = new Float32Array(NP);
     var pSize = new Float32Array(NP);
@@ -898,7 +902,7 @@
     function seedPetal(i, fromTop) {
       var i3 = i * 3;
       pPos[i3]     = (Math.random() * 2 - 1) * P_R;
-      pPos[i3 + 1] = fromTop ? P_H + Math.random() * 0.8 : (Math.random() * 2 - 1) * P_H;
+      pPos[i3 + 1] = fromTop ? P_H + Math.random() * 0.8 : -P_BOT + Math.random() * (P_H + P_BOT);
       pPos[i3 + 2] = (Math.random() * 2 - 1) * P_R;
       pRot[i]  = Math.random() * Math.PI * 2;
       var bloom = Math.random() < BLOSSOM_SHARE;
@@ -930,13 +934,15 @@
         uColA:   { value: new THREE.Color(TH.petalA) },
         uColB:   { value: new THREE.Color(TH.petalB) },
         uAlpha:  { value: TH.petalAlpha },
-        uFade:   { value: 0 }
+        uFade:   { value: 0 },
+        uTop:    { value: P_H },
+        uBot:    { value: -P_BOT }
       },
       transparent: true, depthWrite: false, depthTest: true,
       blending: THREE.NormalBlending,
       vertexShader: [
         'attribute float rot; attribute float psize; attribute float tint; attribute float kind;',
-        'uniform float uPix;',
+        'uniform float uPix; uniform float uTop; uniform float uBot;',
         'varying float vRot; varying float vTint; varying float vNear; varying float vKind;',
         'void main() {',
         '  vRot = rot; vTint = tint; vKind = kind;',
@@ -945,6 +951,9 @@
         // A petal drifting right past the lens would otherwise blow up into a
         // screen-filling smear; fade it out over the last stretch instead.
         '  vNear = smoothstep(0.55, 1.9, -mv.z);',
+        // Fade in as a petal enters at the top and out before the floor, so
+        // the recycle is never seen as a pop, whatever the camera angle.
+        '  vNear *= smoothstep(uTop + 0.8, uTop - 0.6, position.y) * smoothstep(uBot, uBot + 1.6, position.y);',
         '  gl_PointSize = psize * uPix * (5.0 / d);',
         '  gl_Position = projectionMatrix * mv;',
         '}'
@@ -1004,7 +1013,7 @@
         pPos[i3]     += Math.sin(t * f + ph) * amp * s;
         pPos[i3 + 2] += Math.cos(t * f * 0.8 + ph) * amp * 0.7 * s;
         pRot[i]      += pv.spin[i] * s;
-        if (pPos[i3 + 1] < -P_H) seedPetal(i, true);
+        if (pPos[i3 + 1] < -P_BOT) seedPetal(i, true);
       }
       petalGeom.attributes.position.needsUpdate = true;
       petalGeom.attributes.rot.needsUpdate = true;
@@ -1124,7 +1133,17 @@
 
   function burst(point, normal, n) {
     for (var i = 0; i < n; i++) {
-      var k = sparkCursor % SPARK_MAX; sparkCursor++;
+      // Take a slot whose petal has already finished. Only when every petal
+      // is still in the air reuse one -- the faintest -- so rapid clicking
+      // never makes a clearly visible petal blink out.
+      var k = -1, faintest = 0, faintLife = 2;
+      for (var m = 0; m < SPARK_MAX; m++) {
+        var c = (sparkCursor + m) % SPARK_MAX;
+        if (sparkLife[c] <= 0) { k = c; break; }
+        if (sparkLife[c] < faintLife) { faintLife = sparkLife[c]; faintest = c; }
+      }
+      if (k < 0) k = faintest;
+      sparkCursor = k + 1;
       var k3 = k * 3;
       sparkPos[k3] = point.x; sparkPos[k3+1] = point.y; sparkPos[k3+2] = point.z;
       // Mostly along the surface normal, with a wide random scatter. They all
