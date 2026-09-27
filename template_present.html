@@ -78,6 +78,11 @@
      letter opts back in to text selection for itself. */
   #stage { position: fixed; inset: 0; z-index: 0;
            user-select: none; -webkit-user-select: none; }
+  /* A second, transparent canvas above everything else on the page. A burst
+     of petals starts out here, in front of the words and the photograph,
+     then hands over to the canvas underneath as it drifts off -- so it
+     looks as if it flew out past the page and settled in behind it. */
+  #front { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
 
   /* --------------------------------------------------------------- COVER */
   /* The first screen: the title and one button. It sits above the landing
@@ -465,6 +470,7 @@
 <body class="at-cover">
 
 <div id="stage"></div>
+<div id="front" aria-hidden="true"></div>
 
 <div id="cover">
   <p class="eyebrow rise" style="animation-delay:120ms">a small place for our story</p>
@@ -905,7 +911,8 @@
       uPix:  { value: 1 },
       uColA: { value: new THREE.Vector3().fromArray(TH.sparkA) },
       uColB: { value: new THREE.Vector3().fromArray(TH.sparkB) },
-      uGain: { value: TH.sparkGain }
+      uGain: { value: TH.sparkGain },
+      uLayer: { value: 0 }
     },
     transparent: true, depthWrite: false, depthTest: false,
     // Normal blending. Additive light *adds* to what is behind it, which is
@@ -925,7 +932,7 @@
       '}'
     ].join('\n'),
     fragmentShader: [
-      'uniform vec3 uColA; uniform vec3 uColB; uniform float uGain;',
+      'uniform vec3 uColA; uniform vec3 uColB; uniform float uGain; uniform float uLayer;',
       'varying float vLife; varying float vSeed; varying float vRot;',
       'void main() {',
       '  if (vLife <= 0.0) discard;',
@@ -938,18 +945,57 @@
       '  p.x /= 0.66;',
       '  float notch = 0.46 - length(p - vec2(0.0, 1.02));',
       '  float dd = max(length(p) - 0.92, notch);',
-      '  float a = (1.0 - smoothstep(-0.18, 0.05, dd)) * min(1.0, vLife * 2.2);',
+      '  float a = (1.0 - smoothstep(-0.18, 0.05, dd)) * min(1.0, vLife * 2.2) * uGain;',
+      // Front for the first stretch of its life, then a cross-fade onto the
+      // back layer. The back share is corrected so the two layers stacked
+      // over empty page add up to exactly the one petal -- no dip mid-fade.
+      '  float fr = smoothstep(0.55, 0.80, vLife);',
+      // uLayer: 1 front, 0 back, -1 back with no front layer at all.
+      '  if (uLayer > 0.5) a *= fr;',
+      '  else if (uLayer > -0.5) a *= (1.0 - fr) / max(1.0 - a * fr, 0.001);',
       '  if (a <= 0.004) discard;',
       '  vec3 col = mix(uColA, uColB, vSeed);',
       // Not premultiplied: normal blending applies the alpha itself, and
       // doing it twice lands each petal as a grey speck.
-      '  gl_FragColor = vec4(col, a * uGain);',
+      '  gl_FragColor = vec4(col, a);',
       '}'
     ].join('\n')
   });
   var sparks = new THREE.Points(sparkGeom, sparkMat);
   sparks.frustumCulled = false;
   scene.add(sparks);
+
+  // The front layer: the same particles and the same shader, drawn by its own
+  // transparent renderer. The uniforms are shared objects, so a resize reaches
+  // both; only uLayer differs.
+  var frontHost = document.getElementById('front');
+  var frontRenderer = null, frontScene = null, frontLive = false;
+  try {
+    frontRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    frontRenderer.setClearColor(0x000000, 0);
+    frontHost.appendChild(frontRenderer.domElement);
+    frontScene = new THREE.Scene();
+    var frontMat = new THREE.ShaderMaterial({
+      uniforms: Object.assign({}, sparkMat.uniforms, { uLayer: { value: 1 } }),
+      vertexShader: sparkMat.vertexShader, fragmentShader: sparkMat.fragmentShader,
+      transparent: true, depthWrite: false, depthTest: false,
+      blending: THREE.NormalBlending
+    });
+    var frontSparks = new THREE.Points(sparkGeom, frontMat);
+    frontSparks.frustumCulled = false;
+    frontScene.add(frontSparks);
+  } catch (_) {
+    // No second context to be had: the petals simply stay behind the page.
+    frontRenderer = null;
+    sparkMat.uniforms.uLayer.value = -1;
+  }
+  // Draw only while petals are in the air, plus one last frame to clear.
+  function renderFront() {
+    if (!frontRenderer) return;
+    if (!anySpark && !frontLive) return;
+    frontRenderer.render(frontScene, camera);
+    frontLive = anySpark;
+  }
 
   function burst(point, normal, n) {
     for (var i = 0; i < n; i++) {
@@ -1620,6 +1666,11 @@
     Post.resize(w, h, pixelRatio);
     setHint();                    // the label switches form with the layout
     sparkMat.uniforms.uPix.value = pixelRatio;
+    if (frontRenderer) {
+      frontRenderer.setPixelRatio(pixelRatio);
+      frontRenderer.setSize(w, h, false);
+      frontLive = true;             // redraw at the new size
+    }
     if (petals) {
       petals.material.uniforms.uPix.value = pixelRatio;
       // Nothing else to update: in world space the petals no longer need to
@@ -1675,6 +1726,7 @@
     updatePetals(dt);
 
     Post.render();
+    renderFront();
     requestAnimationFrame(tick);
   }
 
