@@ -78,6 +78,11 @@
      letter opts back in to text selection for itself. */
   #stage { position: fixed; inset: 0; z-index: 0;
            user-select: none; -webkit-user-select: none; }
+  /* A second, transparent canvas above everything else on the page. A burst
+     of petals starts out here, in front of the words and the photograph,
+     then hands over to the canvas underneath as it drifts off -- so it
+     looks as if it flew out past the page and settled in behind it. */
+  #front { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
 
   /* --------------------------------------------------------------- COVER */
   /* The first screen: the title and one button. It sits above the landing
@@ -204,6 +209,13 @@
   body:not(.at-cover) .landing .in.d3 { transition-delay: 820ms; }
   body:not(.at-cover) .landing .in.d4 { transition-delay: 1040ms; }
   body:not(.at-cover) .landing .in.d5 { transition-delay: 1280ms; }
+
+  /* The way back to the cover: the landing's pieces sink away together,
+     quicker than they arrived, and only then does the cover rise again. */
+  body.leaving .landing .in {
+    opacity: 0; transform: translateY(-14px);
+    transition-duration: 600ms; transition-delay: 0ms !important;
+  }
 
   .photo {
     margin: 0; justify-self: center; position: relative;
@@ -346,51 +358,6 @@
   #letter > :first-child { margin-top: auto; }
   #letter > :last-child  { margin-bottom: auto; }
 
-  /* --------------------------------------------------------------- HINT */
-  #hint {
-    position: fixed; left: 0; bottom: 3.2vh; width: 54vw; z-index: 4;
-    text-align: center; pointer-events: none;
-    opacity: 0; transition: opacity 1400ms var(--ease) 600ms;
-  }
-  #hint span {
-    display: inline-block;
-    font-family: system-ui, sans-serif; font-size: 12.5px; font-weight: 500;
-    letter-spacing: .13em; text-transform: uppercase; color: var(--chip-ink);
-    background: var(--chip-bg); border: 1px solid var(--chip-border);
-    border-radius: 999px; padding: .75em 1.5em;
-    backdrop-filter: blur(6px);
-  }
-  #hint.show { opacity: .92; }
-
-  /* ---------------------------------------------------------------- BACK */
-  #back {
-    position: fixed; left: 2.6vw; top: 3.4vh; z-index: 6;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 13.5px; font-weight: 500; letter-spacing: .15em;
-    text-transform: uppercase;
-    color: var(--chip-ink);
-    background: var(--chip-bg);
-    border: 1px solid var(--chip-border); border-radius: 999px;
-    display: inline-flex; align-items: center;
-    min-height: 50px; padding: 0 1.7em 0 1.3em; cursor: pointer;
-    backdrop-filter: blur(6px);
-    opacity: 0; pointer-events: none;
-    transition: opacity 900ms var(--ease), color 320ms var(--ease),
-                background 320ms var(--ease), border-color 320ms var(--ease),
-                transform 320ms var(--ease);
-  }
-  #back.show { opacity: 1; pointer-events: auto; }
-  #back:hover, #back:focus-visible {
-    color: var(--btn-text); background: var(--btn-bg); border-color: transparent;
-    transform: translateX(-3px); outline: none;
-  }
-  #back:active { transform: translateX(-1px) scale(.97); transition-duration: 110ms; }
-  #back .arrow { display: inline-block; margin-right: .7em; font-size: 1.15em; }
-
-  @media (max-width: 400px) {
-    #back { min-height: 46px; padding: 0 1.2em 0 1em; font-size: 12px; }
-  }
-
   /* ------------------------------------------------------------- MOBILE */
   /* Stack on a narrow screen -- but also on a nearly square one. A 970x910
      window is "wide" by pixel count yet has no room to put a flower beside a
@@ -412,15 +379,6 @@
     #letter > :first-child { margin-top: 0; }
     #letter > :last-child  { margin-bottom: 0; }
     #letter p { max-width: none; }
-    /* Stacked, the flower fills the middle and the letter the bottom, so
-       there is no free band between them -- the hint sat straight on top of
-       her. The only clear strip is along the top, which the back button uses
-       just the left end of, so the hint goes to the other end of it. */
-    #hint {
-      width: auto; left: auto; right: 2.6vw; bottom: auto; top: 3.4vh;
-      text-align: right;
-    }
-    #hint span { font-size: 11px; letter-spacing: .1em; padding: .75em 1.2em; }
   }
   /* Stacked landing: the photograph above the words, and the page scrolls. */
   @media (max-width: 880px), (max-aspect-ratio: 5/4) {
@@ -434,12 +392,6 @@
     .intro { text-align: center; }
     .intro p, .menu { margin-left: auto; margin-right: auto; }
     .menu { text-align: left; }
-  }
-
-  /* On the narrowest phones the back button and the hint would meet in the
-     middle of that top strip; shrink the label rather than truncate it. */
-  @media (max-width: 400px) {
-    #hint span { font-size: 10px; letter-spacing: .06em; padding: .7em 1em; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -458,6 +410,7 @@
 <body class="at-cover">
 
 <div id="stage"></div>
+<div id="front" aria-hidden="true"></div>
 
 <div id="cover">
   <p class="eyebrow rise" style="animation-delay:120ms">a small place for our story</p>
@@ -506,8 +459,6 @@
   <p class="sign">with all my love and all my commitment,<b>Muhammad Arief Mulyana</b></p>
 </div>
 
-<button id="back" type="button" aria-label="Back to our story"><span class="arrow" aria-hidden="true">&#8592;</span>back</button>
-<div id="hint"><span>drag to turn her &middot; click anywhere for petals</span></div>
 <div id="err"></div>
 
 <script>/**
@@ -1085,7 +1036,8 @@
       uPix:  { value: 1 },
       uColA: { value: new THREE.Vector3().fromArray(TH.sparkA) },
       uColB: { value: new THREE.Vector3().fromArray(TH.sparkB) },
-      uGain: { value: TH.sparkGain }
+      uGain: { value: TH.sparkGain },
+      uLayer: { value: 0 }
     },
     transparent: true, depthWrite: false, depthTest: false,
     // Normal blending. Additive light *adds* to what is behind it, which is
@@ -1105,7 +1057,7 @@
       '}'
     ].join('\n'),
     fragmentShader: [
-      'uniform vec3 uColA; uniform vec3 uColB; uniform float uGain;',
+      'uniform vec3 uColA; uniform vec3 uColB; uniform float uGain; uniform float uLayer;',
       'varying float vLife; varying float vSeed; varying float vRot;',
       'void main() {',
       '  if (vLife <= 0.0) discard;',
@@ -1118,18 +1070,57 @@
       '  p.x /= 0.66;',
       '  float notch = 0.46 - length(p - vec2(0.0, 1.02));',
       '  float dd = max(length(p) - 0.92, notch);',
-      '  float a = (1.0 - smoothstep(-0.18, 0.05, dd)) * min(1.0, vLife * 2.2);',
+      '  float a = (1.0 - smoothstep(-0.18, 0.05, dd)) * min(1.0, vLife * 2.2) * uGain;',
+      // Front for the first stretch of its life, then a cross-fade onto the
+      // back layer. The back share is corrected so the two layers stacked
+      // over empty page add up to exactly the one petal -- no dip mid-fade.
+      '  float fr = smoothstep(0.55, 0.80, vLife);',
+      // uLayer: 1 front, 0 back, -1 back with no front layer at all.
+      '  if (uLayer > 0.5) a *= fr;',
+      '  else if (uLayer > -0.5) a *= (1.0 - fr) / max(1.0 - a * fr, 0.001);',
       '  if (a <= 0.004) discard;',
       '  vec3 col = mix(uColA, uColB, vSeed);',
       // Not premultiplied: normal blending applies the alpha itself, and
       // doing it twice lands each petal as a grey speck.
-      '  gl_FragColor = vec4(col, a * uGain);',
+      '  gl_FragColor = vec4(col, a);',
       '}'
     ].join('\n')
   });
   var sparks = new THREE.Points(sparkGeom, sparkMat);
   sparks.frustumCulled = false;
   scene.add(sparks);
+
+  // The front layer: the same particles and the same shader, drawn by its own
+  // transparent renderer. The uniforms are shared objects, so a resize reaches
+  // both; only uLayer differs.
+  var frontHost = document.getElementById('front');
+  var frontRenderer = null, frontScene = null, frontLive = false;
+  try {
+    frontRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    frontRenderer.setClearColor(0x000000, 0);
+    frontHost.appendChild(frontRenderer.domElement);
+    frontScene = new THREE.Scene();
+    var frontMat = new THREE.ShaderMaterial({
+      uniforms: Object.assign({}, sparkMat.uniforms, { uLayer: { value: 1 } }),
+      vertexShader: sparkMat.vertexShader, fragmentShader: sparkMat.fragmentShader,
+      transparent: true, depthWrite: false, depthTest: false,
+      blending: THREE.NormalBlending
+    });
+    var frontSparks = new THREE.Points(sparkGeom, frontMat);
+    frontSparks.frustumCulled = false;
+    frontScene.add(frontSparks);
+  } catch (_) {
+    // No second context to be had: the petals simply stay behind the page.
+    frontRenderer = null;
+    sparkMat.uniforms.uLayer.value = -1;
+  }
+  // Draw only while petals are in the air, plus one last frame to clear.
+  function renderFront() {
+    if (!frontRenderer) return;
+    if (!anySpark && !frontLive) return;
+    frontRenderer.render(frontScene, camera);
+    frontLive = anySpark;
+  }
 
   function burst(point, normal, n) {
     for (var i = 0; i < n; i++) {
@@ -1380,15 +1371,6 @@
 
   var gateEl = document.getElementById('gate');
   var letterEl = document.getElementById('letter');
-  var hintEl = document.getElementById('hint');
-  var backEl = document.getElementById('back');
-  // The full sentence is wider than a phone, so narrow screens get the short form.
-  function setHint() {
-    hintEl.firstElementChild.innerHTML = isNarrow()
-      ? (window.innerWidth < 400 ? 'tap for petals' : 'tap anywhere for petals')
-      : 'drag to turn her &middot; click anywhere for petals';
-  }
-  setHint();
   var openBtn = document.getElementById('open');
   var coverEl = document.getElementById('cover');
   var startBtn = document.getElementById('start');
@@ -1442,8 +1424,13 @@
   // cover is simply never shown.
   var coverTimer = 0;
   function hideCover(instant) {
-    if (document.body.classList.contains('at-cover') === false) return;
     clearTimeout(coverTimer);
+    // Changed mind half-way back to the cover: just let the landing return.
+    if (document.body.classList.contains('leaving')) {
+      document.body.classList.remove('leaving');
+      return;
+    }
+    if (document.body.classList.contains('at-cover') === false) return;
     if (instant) {
       coverEl.classList.add('away', 'gone');
       document.body.classList.remove('at-cover');
@@ -1459,15 +1446,33 @@
       }, 380);
     }, PRESS_LEAD);
   }
+  // Replay the cover's staggered entrance, so coming back feels like the
+  // first arrival rather than a screen snapping into place.
+  function replayCoverRise() {
+    var items = coverEl.querySelectorAll('.rise');
+    for (var i = 0; i < items.length; i++) items[i].style.animation = 'none';
+    void coverEl.offsetHeight;
+    for (var j = 0; j < items.length; j++) items[j].style.animation = '';
+  }
   function showCover() {
-    if (document.body.classList.contains('at-cover')) return;
     clearTimeout(coverTimer);
-    startBtn.classList.remove('pressed');
-    coverEl.classList.remove('gone');
-    void coverEl.offsetHeight;             // reflow, or the fade has nothing to run from
-    document.body.classList.add('at-cover');
-    coverEl.classList.remove('away');
-    gateEl.scrollTop = 0;
+    if (document.body.classList.contains('at-cover')) {
+      // The cover was still on its way out: bring it straight back.
+      startBtn.classList.remove('pressed');
+      coverEl.classList.remove('away', 'gone');
+      return;
+    }
+    document.body.classList.add('leaving');
+    coverTimer = setTimeout(function () {
+      document.body.classList.remove('leaving');
+      document.body.classList.add('at-cover');
+      gateEl.scrollTop = 0;
+      startBtn.classList.remove('pressed');
+      coverEl.classList.remove('gone');
+      void coverEl.offsetHeight;           // reflow, or the fade has nothing to run from
+      replayCoverRise();
+      coverEl.classList.remove('away');
+    }, 560);
   }
   if (desiredView !== 'cover') hideCover(true);
 
@@ -1496,16 +1501,6 @@
     syncToDesiredView();
   }
 
-  function showGreeting() {
-    desiredView = 'greeting';
-    if (viewFromHistory(history.state) === 'present') {
-      history.back();                    // leaves a Forward entry for the letter
-      return;
-    }
-    writeHistoryView('greeting', true);  // fallback if History API was unavailable
-    syncToDesiredView();
-  }
-
   window.addEventListener('popstate', function (e) {
     desiredView = viewFromHistory(e.state);
     syncToDesiredView();
@@ -1527,9 +1522,8 @@
   }
   openBtn.addEventListener('click', showPresent);
   startBtn.addEventListener('click', showLanding);
-  document.getElementById('back').addEventListener('click', showGreeting);
 
-  var letterShown = false, hintShown = false;
+  var letterShown = false;
 
   // Every track of the transition as a pure function of u, 0 = closed bud on
   // an empty page, 1 = fully open and parked beside the letter. Closing is the
@@ -1566,11 +1560,6 @@
     applyTracks(u);
 
     if (!letterShown && u >= 0.60) { letterShown = true; letterEl.classList.add('show'); }
-    if (!hintShown && u >= 0.94) {
-      hintShown = true;
-      hintEl.classList.add('show');
-      backEl.classList.add('show');
-    }
 
     if (u >= 1) {
       act = ACT.SETTLED;
@@ -1587,12 +1576,10 @@
     act = ACT.CLOSING;
     closeStart = performance.now();
     gateRestored = false;
-    letterShown = false; hintShown = false;
+    letterShown = false;
     // These fade on their own CSS transitions while the flower folds up.
     letterEl.classList.remove('show');
     letterEl.setAttribute('aria-hidden', 'true');
-    hintEl.classList.remove('show');
-    backEl.classList.remove('show');
     letterEl.scrollTop = 0;
   }
 
@@ -1751,6 +1738,18 @@
     sparkleAt(e.clientX, e.clientY);
   });
 
+  // The cover and the landing sit over the canvas, so their clicks never
+  // reach it either. Forward the plain ones too -- anything but a click on a
+  // button, which has its own job to do.
+  function forwardPageClick(e) {
+    if (act !== ACT.GATE) return;
+    if (e.target.closest && e.target.closest('button, a')) return;
+    if (String(window.getSelection()).length) return;
+    sparkleAt(e.clientX, e.clientY);
+  }
+  coverEl.addEventListener('click', forwardPageClick);
+  gateEl.addEventListener('click', forwardPageClick);
+
   // =================================================================
   // Layout
   // =================================================================
@@ -1763,8 +1762,12 @@
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     Post.resize(w, h, pixelRatio);
-    setHint();                    // the label switches form with the layout
     sparkMat.uniforms.uPix.value = pixelRatio;
+    if (frontRenderer) {
+      frontRenderer.setPixelRatio(pixelRatio);
+      frontRenderer.setSize(w, h, false);
+      frontLive = true;             // redraw at the new size
+    }
     if (petals) {
       petals.material.uniforms.uPix.value = pixelRatio;
       // Nothing else to update: in world space the petals no longer need to
@@ -1820,6 +1823,7 @@
     updatePetals(dt);
 
     Post.render();
+    renderFront();
     requestAnimationFrame(tick);
   }
 
@@ -1852,9 +1856,8 @@
       cam.phi = 1.02;
       cam.dist = fitDistance();
       vel.theta = IDLE_SPIN / 60; vel.phi = 0;
-      letterEl.classList.add('show'); hintEl.classList.add('show');
-      backEl.classList.add('show');
-      letterShown = hintShown = true;
+      letterEl.classList.add('show');
+      letterShown = true;
       letterEl.setAttribute('aria-hidden', 'false');
       gateEl.style.display = 'none'; rose.visible = true;
       if (petals) { petalFade = 1; petals.material.uniforms.uFade.value = 1; }
