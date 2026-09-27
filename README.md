@@ -1,8 +1,8 @@
-# HBD Erlin
+# Arief & Herlina Journey
 
-An interactive birthday rose for Erlin, rendered in the browser with Three.js. The page is self-contained, works offline, and includes light and dark themes with a remembered theme preference.
+A small site for the story of Arief and Herlina. It opens on a title screen, moves to a landing page with a photograph, an introduction and a menu of chapters, and the first chapter is a commitment letter from Arief to Herlina, presented beside an interactive rose rendered in the browser with Three.js.
 
-[Open the birthday page](https://physarief78.github.io/HBD-Erlin/)
+[Open the site](https://physarief78.github.io/Arief-and-Herlina-Journey/)
 
 ## Run locally
 
@@ -25,7 +25,8 @@ node verify_geometry.js
 
 ## Main files
 
-- `index.html` — generated, self-contained site served by GitHub Pages
+- `index.html` — generated site served by GitHub Pages (Three.js is inlined; the landing photo is loaded from `assets/`)
+- `assets/journey.jpg` — the landing-page photograph
 - `template_present.html` — page structure, styling, and interaction source
 - `rose_present.jl` — generator and reference Julia geometry
 - `rose_geometry.js` — browser-side geometry implementation
