@@ -205,6 +205,13 @@
   body:not(.at-cover) .landing .in.d4 { transition-delay: 1040ms; }
   body:not(.at-cover) .landing .in.d5 { transition-delay: 1280ms; }
 
+  /* The way back to the cover: the landing's pieces sink away together,
+     quicker than they arrived, and only then does the cover rise again. */
+  body.leaving .landing .in {
+    opacity: 0; transform: translateY(-14px);
+    transition-duration: 600ms; transition-delay: 0ms !important;
+  }
+
   .photo {
     margin: 0; justify-self: center; position: relative;
     padding: 12px 12px 14px; background: #fffdf8;
@@ -1442,8 +1449,13 @@
   // cover is simply never shown.
   var coverTimer = 0;
   function hideCover(instant) {
-    if (document.body.classList.contains('at-cover') === false) return;
     clearTimeout(coverTimer);
+    // Changed mind half-way back to the cover: just let the landing return.
+    if (document.body.classList.contains('leaving')) {
+      document.body.classList.remove('leaving');
+      return;
+    }
+    if (document.body.classList.contains('at-cover') === false) return;
     if (instant) {
       coverEl.classList.add('away', 'gone');
       document.body.classList.remove('at-cover');
@@ -1459,15 +1471,33 @@
       }, 380);
     }, PRESS_LEAD);
   }
+  // Replay the cover's staggered entrance, so coming back feels like the
+  // first arrival rather than a screen snapping into place.
+  function replayCoverRise() {
+    var items = coverEl.querySelectorAll('.rise');
+    for (var i = 0; i < items.length; i++) items[i].style.animation = 'none';
+    void coverEl.offsetHeight;
+    for (var j = 0; j < items.length; j++) items[j].style.animation = '';
+  }
   function showCover() {
-    if (document.body.classList.contains('at-cover')) return;
     clearTimeout(coverTimer);
-    startBtn.classList.remove('pressed');
-    coverEl.classList.remove('gone');
-    void coverEl.offsetHeight;             // reflow, or the fade has nothing to run from
-    document.body.classList.add('at-cover');
-    coverEl.classList.remove('away');
-    gateEl.scrollTop = 0;
+    if (document.body.classList.contains('at-cover')) {
+      // The cover was still on its way out: bring it straight back.
+      startBtn.classList.remove('pressed');
+      coverEl.classList.remove('away', 'gone');
+      return;
+    }
+    document.body.classList.add('leaving');
+    coverTimer = setTimeout(function () {
+      document.body.classList.remove('leaving');
+      document.body.classList.add('at-cover');
+      gateEl.scrollTop = 0;
+      startBtn.classList.remove('pressed');
+      coverEl.classList.remove('gone');
+      void coverEl.offsetHeight;           // reflow, or the fade has nothing to run from
+      replayCoverRise();
+      coverEl.classList.remove('away');
+    }, 560);
   }
   if (desiredView !== 'cover') hideCover(true);
 
@@ -1750,6 +1780,18 @@
     if (String(window.getSelection()).length) return;                 // selecting
     sparkleAt(e.clientX, e.clientY);
   });
+
+  // The cover and the landing sit over the canvas, so their clicks never
+  // reach it either. Forward the plain ones too -- anything but a click on a
+  // button, which has its own job to do.
+  function forwardPageClick(e) {
+    if (act !== ACT.GATE) return;
+    if (e.target.closest && e.target.closest('button, a')) return;
+    if (String(window.getSelection()).length) return;
+    sparkleAt(e.clientX, e.clientY);
+  }
+  coverEl.addEventListener('click', forwardPageClick);
+  gateEl.addEventListener('click', forwardPageClick);
 
   // =================================================================
   // Layout
