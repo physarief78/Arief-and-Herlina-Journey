@@ -61,7 +61,6 @@
     --chip-bg:       rgba(31,28,23,.05);
     --chip-border:   rgba(31,28,23,.17);
     --chip-ink:      #1f1c17;
-    --scrim:         linear-gradient(to bottom, rgba(249,246,238,0) 0%, rgba(249,246,238,.9) 13%, rgba(249,246,238,.98) 32%);
     --err:           #a3202f;
   }
   * { box-sizing: border-box; }
@@ -369,7 +368,12 @@
       padding: 3vh 7vw calc(3vh + env(safe-area-inset-bottom)) 7vw;
       justify-content: flex-start; overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      background: var(--scrim);
+      /* No backdrop, the same as on a wide screen: petals keep drifting
+         behind the words all the way down instead of vanishing under an
+         opaque panel. A soft mask fades only the text itself where it
+         scrolls out under the top edge of the panel. */
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 4.5vh);
+              mask-image: linear-gradient(to bottom, transparent 0, #000 4.5vh);
     }
     /* Here the letter is also a scroll container, so a finger needs to be able
        to pan it vertically while the canvas keeps touch-action:none to orbit.
@@ -685,7 +689,7 @@
   // screen-down. That was over-cautious -- the camera stays upright, so
   // world -Y projects to screen-down anyway for every angle that matters.)
   // =================================================================
-  var petals = null, updatePetals = function () {};
+  var petals = null, updatePetals = function () {}, setPetalDensity = function () {};
   {
     // A third of these are hidden behind the rose or the letter at any moment,
     // so the on-screen count is lower than it looks here. Still deliberately
@@ -698,7 +702,13 @@
     // The box reaches well below the rose: the camera looks down on her, so a
     // floor any higher is on screen, and petals were seen blinking out as they
     // crossed it. More petals to keep the same density over the deeper box.
-    var NP = 238;
+    var NP_BASE = 238;
+    // A phone held upright sees a third of the width a desktop does, so it
+    // would catch a third of the petals. Allocate enough for that and draw
+    // more of them the narrower the view -- see setPetalDensity().
+    var NP_WIDE_ASPECT = 1.6, NP_MAX_BOOST = 3.2;
+    var NP = Math.ceil(NP_BASE * NP_MAX_BOOST);
+    var petalCount = NP_BASE;
     var BLOSSOM_SHARE = 0.32;
     var P_R = 4.2;      // half-width of the box they fall through
     var P_H = 3.0;      // top of the box
@@ -814,11 +824,17 @@
 
     petals = new THREE.Points(petalGeom, petalMat);
     petals.frustumCulled = false;
+    petalGeom.setDrawRange(0, petalCount);
+    setPetalDensity = function (aspect) {
+      var boost = Math.max(1, Math.min(NP_MAX_BOOST, NP_WIDE_ASPECT / Math.max(aspect, 0.1)));
+      petalCount = Math.min(NP, Math.round(NP_BASE * boost));
+      petalGeom.setDrawRange(0, petalCount);
+    };
     scene.add(petals);      // in the world, so orbiting moves the camera through them
 
     updatePetals = function (dt) {
       var s = dt / 1000, t = clock / 1000;
-      for (var i = 0; i < NP; i++) {
+      for (var i = 0; i < petalCount; i++) {
         var i3 = i * 3, ph = pv.phase[i], f = pv.swayF[i], amp = pv.swayA[i];
         pPos[i3 + 1] -= pv.fall[i] * s;
         // Sway across both horizontal axes, a quarter-turn apart, so a petal
@@ -1595,6 +1611,7 @@
     camera.updateProjectionMatrix();
     Post.resize(w, h, pixelRatio);
     sparkMat.uniforms.uPix.value = pixelRatio;
+    setPetalDensity(w / Math.max(h, 1));
     if (frontRenderer) {
       frontRenderer.setPixelRatio(pixelRatio);
       frontRenderer.setSize(w, h, false);
