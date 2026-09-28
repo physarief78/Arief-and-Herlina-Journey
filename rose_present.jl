@@ -1,0 +1,200 @@
+#!/usr/bin/env julia
+# =====================================================================
+#  rose_present.jl  --  generator for Happy_Birthday_Erlin.html
+#
+#  Replaces the approach in rose.jl. That script evaluated the surface
+#  once and serialised all 36,030 vertices into the page as literal JSON,
+#  which is where Eid_Mubarak_Erlin.html's 5.6 MB comes from -- roughly
+#  99% of that file is coordinates describing ONE frozen pose.
+#
+#  Here the page carries the *formula* instead of the *data*: the browser
+#  rebuilds the mesh from parameters (measured at ~0.4 ms for the full
+#  36k-vertex grid, about 2% of a 60 fps frame budget). That makes the
+#  bloom continuously scrubbable rather than a fixed set of frames, and
+#  drops the page to roughly 640 KB -- of which 608 KB is three.js,
+#  inlined so the gift opens with no internet at all.
+#
+#  The math below is copied verbatim from rose.jl and deliberately left
+#  in its original vectorised form. rose_geometry.js re-expresses it as a
+#  scalar loop; verify_geometry.js checks the two agree. If this file is
+#  ever "tidied" to match the JS structure, that check becomes circular
+#  and stops being worth running.
+#
+#  Zero package dependencies -- runs on a bare Julia install.
+#
+#  Usage:  julia rose_present.jl
+# =====================================================================
+
+using Printf
+
+const HERE     = @__DIR__
+const BUILDDIR = joinpath(HERE, "build")
+
+# One page carrying both themes, switched at runtime rather than at build
+# time. Named index.html because that is what GitHub Pages serves from the
+# repository root.
+const OUTFILE = joinpath(HERE, "index.html")
+
+# ---------------------------------------------------------------------
+# Parameters -- identical to rose.jl
+# ---------------------------------------------------------------------
+const PPR = 3.6      # petals per revolution
+const NR  = 30       # radial resolution
+const PR  = 30       # petal resolution
+const PN  = 40       # number of petals
+const PF  = 2.0      # petal tip curl
+const PS  = 5 / 4    # petal edge sharpness
+
+# Bloom endpoints; ol = [inner, outer] openness.
+#
+# The closed end is a judgement call, not a free parameter. This surface
+# collapses onto its own axis as phi -> 0, so it has no egg-shaped "closed
+# bud" pose: below about outer = 0.35 it stops reading as a flower and turns
+# into a needle. 0.42 is the tightest pose that still shows furled petals.
+# (rose_animation.jl starts at [0.05, 0.60], but it is morphing ppr/pf/ps at
+# the same time -- a different flower each frame, not one flower opening.)
+const OL_BUD   = [0.05, 0.42]
+const OL_BLOOM = [0.22, 1.10]
+
+# ---------------------------------------------------------------------
+# Geometry -- rose.jl's expressions, unchanged
+# ---------------------------------------------------------------------
+function compute_geometry(ol::Vector{Float64})
+    pt      = (1 / PPR) * pi * 2
+    θ       = range(0, stop = PN * pt, length = PN * PR + 1)
+    r_vals  = range(0, stop = 1, length = NR)
+
+    R     = [r for r in r_vals, _ in θ]
+    THETA = [t for _ in r_vals, t in θ]
+
+    x = 1 .- (((PS .* ((1 .- mod.(PPR .* THETA, 2pi) ./ pi) .^ 2) .- 1 / 4) .^ 2) ./ 2)
+
+    phi_vec = (pi / 2) .* (range(ol[1], stop = ol[2], length = PN * PR + 1)) .^ 2
+    sin_phi = sin.(phi_vec')
+    cos_phi = cos.(phi_vec')
+
+    y  = PF .* (R .^ 2) .* ((1.28 .* R .- 1) .^ 2) .* sin_phi
+    R2 = (x .* (R .* sin_phi)) .+ (y .* cos_phi)
+
+    X = R2 .* sin.(THETA)
+    Y = R2 .* cos.(THETA)
+    Z = x .* ((R .* cos_phi) .- (y .* sin_phi))
+    C = sqrt.(X .^ 2 .+ Y .^ 2 .+ Z .^ 2)
+
+    return X, Y, Z, C
+end
+
+# ---------------------------------------------------------------------
+# Minimal JSON writing (avoids a package dependency for a few numbers)
+# ---------------------------------------------------------------------
+jnum(x) = (isfinite(x) ? string(Float64(x)) : "null")
+jarr(v) = "[" * join((jnum(e) for e in v), ",") * "]"
+
+# ---------------------------------------------------------------------
+# Golden samples for the Julia <-> JS cross-check
+#
+# Deterministic coverage: the four corners, then a coprime-stride walk so
+# the interior points spread across the grid instead of clustering.
+# Emitted as 0-BASED indices, because that is what the JS side speaks.
+# ---------------------------------------------------------------------
+function sample_indices(n::Int = 240)
+    nT = PN * PR + 1
+    idx = Tuple{Int,Int}[(0, 0), (NR - 1, 0), (0, nT - 1), (NR - 1, nT - 1)]
+    for k in 0:(n - 1)
+        push!(idx, (mod(k * 7, NR), mod(k * 137, nT)))
+    end
+    return unique(idx)
+end
+
+function write_golden(path::String)
+    stages = ["bud" => OL_BUD, "bloom" => OL_BLOOM,
+              "open" => [0.20, 1.02], "reflexed" => [0.25, 1.40],
+              "mid" => (OL_BUD .+ OL_BLOOM) ./ 2]
+    idx = sample_indices()
+
+    io = IOBuffer()
+    print(io, "{\n  \"note\": \"generated by rose_present.jl -- do not hand-edit\",\n")
+    print(io, "  \"stages\": [\n")
+    for (si, (name, ol)) in enumerate(stages)
+        X, Y, Z, C = compute_geometry(collect(Float64, ol))
+        print(io, "    {\"name\": \"", name, "\", \"ol\": ", jarr(ol), ",\n")
+        print(io, "     \"samples\": [\n")
+        for (ki, (i, j)) in enumerate(idx)
+            # Julia arrays are 1-based; the emitted i/j stay 0-based.
+            print(io, "       {\"i\":", i, ",\"j\":", j,
+                      ",\"x\":", jnum(X[i + 1, j + 1]),
+                      ",\"y\":", jnum(Y[i + 1, j + 1]),
+                      ",\"z\":", jnum(Z[i + 1, j + 1]),
+                      ",\"c\":", jnum(C[i + 1, j + 1]), "}")
+            print(io, ki == length(idx) ? "\n" : ",\n")
+        end
+        print(io, "     ]}")
+        print(io, si == length(stages) ? "\n" : ",\n")
+    end
+    print(io, "  ]\n}\n")
+    write(path, String(take!(io)))
+    return length(idx) * length(stages)
+end
+
+function write_params(path::String)
+    io = IOBuffer()
+    print(io, "{\n")
+    print(io, "  \"ppr\": ", jnum(PPR), ",\n  \"nr\": ", NR, ",\n  \"pr\": ", PR, ",\n")
+    print(io, "  \"pn\": ", PN, ",\n  \"pf\": ", jnum(PF), ",\n  \"ps\": ", jnum(PS), ",\n")
+    print(io, "  \"olBud\": ", jarr(OL_BUD), ",\n  \"olBloom\": ", jarr(OL_BLOOM), "\n}\n")
+    write(path, String(take!(io)))
+end
+
+# ---------------------------------------------------------------------
+# Page assembly
+# ---------------------------------------------------------------------
+function read_required(path::String, what::String)
+    isfile(path) || error("missing $what: $path")
+    return read(path, String)
+end
+
+function build_page(outfile::String)
+    three = read_required(joinpath(HERE, "vendor", "three.min.js"), "three.js")
+    geom  = read_required(joinpath(HERE, "rose_geometry.js"), "rose_geometry.js")
+    tmpl  = read_required(joinpath(HERE, "template_present.html"), "page template")
+
+    params_json = string("{\"ppr\":", jnum(PPR), ",\"nr\":", NR, ",\"pr\":", PR,
+                         ",\"pn\":", PN, ",\"pf\":", jnum(PF), ",\"ps\":", jnum(PS), "}")
+
+    html = tmpl
+    html = replace(html, "/*__THREE_JS__*/"     => three)
+    html = replace(html, "/*__ROSE_GEOMETRY__*/" => geom)
+    html = replace(html, "/*__PARAMS__*/"        => params_json)
+    html = replace(html, "/*__OL_BUD__*/"        => jarr(OL_BUD))
+    html = replace(html, "/*__OL_BLOOM__*/"      => jarr(OL_BLOOM))
+    write(outfile, html)
+    return length(html)
+end
+
+# ---------------------------------------------------------------------
+function main()
+    mkpath(BUILDDIR)
+
+    @printf "rose_present.jl  --  grid %d x %d = %d vertices\n" NR (PN*PR+1) (NR*(PN*PR+1))
+    println()
+    println("  stage        ol                 radius    z range")
+    for (name, ol) in ["bud" => OL_BUD, "mid" => (OL_BUD .+ OL_BLOOM) ./ 2,
+                       "bloom" => OL_BLOOM]
+        X, Y, Z, _ = compute_geometry(collect(Float64, ol))
+        rad = maximum(sqrt.(X .^ 2 .+ Y .^ 2))
+        @printf "  %-11s [%.3f, %.3f]  %8.4f   %7.4f .. %.4f\n" name ol[1] ol[2] rad minimum(Z) maximum(Z)
+    end
+    println()
+
+    write_params(joinpath(BUILDDIR, "rose_params.json"))
+    n = write_golden(joinpath(BUILDDIR, "golden.json"))
+    @printf "  wrote build/rose_params.json\n"
+    @printf "  wrote build/golden.json      (%d golden vertices)\n" n
+
+    bytes = build_page(OUTFILE)
+    @printf "  wrote %-32s (%.2f MB, both themes, light by default)\n" basename(OUTFILE) (bytes / 1048576)
+    println()
+    println("  next: node verify_geometry.js")
+end
+
+main()
