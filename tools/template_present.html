@@ -84,24 +84,41 @@
   #scenery { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   #scenery svg { position: absolute; display: block; }
   #land { inset: 0; width: 100%; height: 100%; }
+  /* Two crowns of cherry blossom reaching into the corners: a full, shady
+     one overhead at the top left, a lighter one at the bottom right. Each
+     casts a faint shade on the page beneath it. */
+  #shade {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 52% 46% at 0 0, rgba(118,74,78,.15), rgba(118,74,78,0) 72%),
+      radial-gradient(ellipse 34% 30% at 100% 100%, rgba(118,74,78,.07), rgba(118,74,78,0) 72%);
+  }
   #branch {
-    left: 0; top: 0; width: min(54vw, 660px); height: auto;
+    left: 0; top: 0; width: min(56vw, 690px); height: auto;
     transform-origin: 0 0; animation: sway 11s ease-in-out infinite;
   }
+  #branch2 {
+    right: 0; bottom: 0; width: min(36vw, 460px); height: auto;
+    transform-origin: 100% 100%; animation: sway 13s ease-in-out infinite reverse;
+    transition: opacity 1200ms var(--ease);
+  }
+  /* The letter's last lines run down into the lower crown; let it recede. */
+  body:has(#letter.show) #branch2 { opacity: .3; }
   @keyframes sway { 0%,100% { transform: rotate(-.5deg); } 50% { transform: rotate(.7deg); } }
   #land .mist { animation: drift 38s ease-in-out infinite alternate; }
   #land .mist.b { animation-duration: 52s; animation-direction: alternate-reverse; }
   @keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(40px); } }
   #sc-near-tree, #sc-pagoda-site { transition: opacity 1200ms var(--ease); }
   @media (max-width: 880px), (max-aspect-ratio: 5/4) {
-    #branch { width: min(86vw, 520px); }
+    #branch { width: min(88vw, 520px); }
+    #branch2 { width: min(62vw, 340px); }
     /* Stacked, the letter's lines run straight over the near tree and the
        pagoda; let them recede while it is open. */
     body:has(#letter.show) #sc-near-tree,
     body:has(#letter.show) #sc-pagoda-site { opacity: .28; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #branch, #land .mist { animation: none; }
+    #branch, #branch2, #land .mist { animation: none; }
   }
 
   #stage { position: fixed; inset: 0; z-index: 0;
@@ -499,10 +516,9 @@
     <!-- a big cherry on our own slope, to one side -->
     <g id="sc-near-tree"></g>
   </svg>
-  <svg id="branch" viewBox="0 0 900 520">
-    <g id="sc-limbs" fill="none" stroke-linecap="round"></g>
-    <g id="sc-flowers"></g>
-  </svg>
+  <div id="shade"></div>
+  <svg id="branch" viewBox="0 0 900 520"></svg>
+  <svg id="branch2" viewBox="0 0 700 420"></svg>
 </div>
 <div id="stage"></div>
 <div id="front" aria-hidden="true"></div>
@@ -674,66 +690,145 @@
     placeScenery();
     window.addEventListener('resize', placeScenery);
 
-    // The branch overhead: an old limb in from the top-left corner, bark
-    // and all, with twigs, blossom in clusters, buds and a few new leaves.
-    var limbs = document.getElementById('sc-limbs'), fl = document.getElementById('sc-flowers');
-    var paths = [
-      ['M-30 26 C120 66 260 70 420 118 C540 156 660 168 790 150', 18],
-      ['M180 62 C210 118 236 170 292 222', 8],
-      ['M420 118 C450 70 500 38 568 20', 7],
-      ['M560 150 C592 202 632 244 700 268', 7],
-      ['M292 222 C334 252 380 266 438 264', 4.5],
-      ['M690 150 C744 118 796 102 862 98', 5],
-      ['M86 48 C108 98 118 152 108 204', 6],
-      ['M330 96 C350 60 380 40 420 30', 4],
-      ['M640 162 C660 130 690 112 730 106', 3.5]
-    ];
-    var pts = [];
-    paths.forEach(function (p, pi) {
-      var a = el('path', { d: p[0], stroke: '#4f3d36', 'stroke-width': p[1] }, limbs);
-      el('path', { d: p[0], stroke: '#6d5850', 'stroke-width': p[1] * .45, transform: 'translate(-1.2 -1.6)' }, limbs);
-      var L = a.getTotalLength();
-      // bark: short dark nicks across the thicker limbs
-      if (p[1] > 6) for (var d = 30; d < L - 20; d += 22 + rnd() * 18) {
-        var q = a.getPointAtLength(d);
-        el('path', { d: 'M' + (q.x - 3).toFixed(1) + ' ' + (q.y - p[1] * .3).toFixed(1) + ' l6 ' + (p[1] * .5).toFixed(1), stroke: '#3c2e29', 'stroke-width': 1.2 }, limbs);
+    // A crown of cherry blossom growing out of a corner. Built in "corner
+    // space" -- the corner at (0, 0), the crown spreading right and down to a
+    // lower edge -- so the same recipe serves the top-left (as is) and the
+    // bottom-right (turned half a circle).
+    //   edge      the crown's outer boundary, as [x, y] points left to right
+    //   limbs     [path, width] for the branches showing through
+    //   clusters  how many masses of blossom; flowers: how many single blooms
+    //   shade     strength of the deep-rose shadow inside the crown
+    function growCrown(svg, o) {
+      var W = o.W, H = o.H;
+      var root = el('g', o.flip ? { transform: 'rotate(180 ' + W / 2 + ' ' + H / 2 + ')' } : {}, svg);
+      var defs = el('defs', {}, svg);
+      var soft = el('filter', { id: o.id + '-soft', x: '-20%', y: '-20%', width: '140%', height: '140%' }, defs);
+      el('feGaussianBlur', { stdDeviation: 9 }, soft);
+      var puff = el('filter', { id: o.id + '-puff', x: '-10%', y: '-10%', width: '120%', height: '120%' }, defs);
+      el('feTurbulence', { type: 'fractalNoise', baseFrequency: .07, numOctaves: 2, seed: 5, result: 'n' }, puff);
+      el('feDisplacementMap', { 'in': 'SourceGraphic', in2: 'n', scale: 7, xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' }, puff);
+      el('feGaussianBlur', { 'in': 'd', stdDeviation: .8 }, puff);
+
+      function edgeY(x) {
+        var e = o.edge;
+        if (x <= e[0][0]) return e[0][1];
+        for (var k = 1; k < e.length; k++) if (x <= e[k][0]) {
+          var t = (x - e[k - 1][0]) / (e[k][0] - e[k - 1][0]);
+          return e[k - 1][1] + (e[k][1] - e[k - 1][1]) * t;
+        }
+        return e[e.length - 1][1];
       }
-      // little twigs off every limb, each ending in blossom
-      for (var d2 = L * .2; d2 < L; d2 += 30 + rnd() * 26) {
-        var o = a.getPointAtLength(d2), side = rnd() < .5 ? -1 : 1, tl = 12 + rnd() * 18;
-        var ex = o.x + (rnd() - .3) * tl, ey = o.y + side * tl;
-        el('path', { d: 'M' + o.x.toFixed(1) + ' ' + o.y.toFixed(1) + ' Q' + ((o.x + ex) / 2 + 4).toFixed(1) + ' ' + ((o.y + ey) / 2).toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1),
-                     stroke: '#5a4740', 'stroke-width': 2 }, limbs);
-        pts.push({ x: ex, y: ey, big: 1 });
-        pts.push({ x: o.x, y: o.y, big: 0 });
+      function sample(margin) {
+        for (var tries = 0; tries < 60; tries++) {
+          var x = rnd() * W, y = rnd() * H;
+          if (y < edgeY(x) - margin) return { x: x, y: y, depth: y / Math.max(1, edgeY(x)) };
+        }
+        return { x: 20, y: 20, depth: 0 };
       }
-    });
-    var petal = 'M0 0 C-5 -4 -6.5 -12 -2.2 -15.5 L0 -13.2 L2.2 -15.5 C6.5 -12 5 -4 0 0 Z';
-    var shadesB = ['#f6d6de', '#f0c4d0', '#e9b2c3', '#fbe7ec'];
-    pts.forEach(function (p) {
-      var count = p.big ? 5 + ((rnd() * 3) | 0) : 2 + ((rnd() * 2) | 0);
-      for (var k = 0; k < count; k++) {
-        var x = p.x + (rnd() - .5) * (p.big ? 40 : 24), y = p.y + (rnd() - .5) * (p.big ? 30 : 18), s = .6 + rnd() * .7;
-        var r = rnd();
-        if (r < .12) {        // a bud
-          el('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: (3 * s).toFixed(1), ry: (4.6 * s).toFixed(1), fill: '#d98aa2',
+      // How far out from the trunk: 0 at the corner, 1 at the edge.
+      function reach(p) { return Math.min(1, Math.hypot(p.x / W, p.y / H) / .9 * .5 + p.depth * .5); }
+
+      // 1. the shade inside the crown
+      var sh = el('g', { filter: 'url(#' + o.id + '-soft)', opacity: o.shade }, root);
+      var centers = [];
+      for (var c = 0; c < o.clusters; c++) centers.push(sample(24));
+      centers.forEach(function (p) {
+        el('ellipse', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), rx: (60 + rnd() * 60).toFixed(1), ry: (40 + rnd() * 34).toFixed(1),
+                        fill: rnd() < .5 ? '#b97b93' : '#c78ea3' }, sh);
+      });
+
+      // 2. masses of blossom: deeper toward the trunk, lighter toward the edge
+      var vol = el('g', { filter: 'url(#' + o.id + '-puff)' }, root);
+      var deep = ['#d397ac', '#cf8fa6', '#dba4b7'], mid = ['#e6b2c2', '#ebbecb', '#e2abbd'], lit = ['#f2cdd7', '#f6dbe2', '#efc4d0'];
+      centers.forEach(function (p) {
+        for (var n = 0; n < 13; n++) {
+          var a = rnd() * 6.283, r = Math.sqrt(rnd()) * 46;
+          var q = { x: p.x + Math.cos(a) * r * 1.3, y: p.y + Math.sin(a) * r * .8 };
+          q.depth = q.y / Math.max(1, edgeY(q.x));
+          var t = reach(q), set = t < .45 ? deep : t < .75 ? mid : lit;
+          el('circle', { cx: q.x.toFixed(1), cy: q.y.toFixed(1), r: (11 + rnd() * 15).toFixed(1),
+                         fill: set[(rnd() * set.length) | 0], opacity: .9 }, vol);
+        }
+      });
+
+      // 3. limbs showing through the blossom, with a few bark nicks
+      var lg = el('g', { fill: 'none', 'stroke-linecap': 'round' }, root);
+      o.limbs.forEach(function (b) {
+        var a = el('path', { d: b[0], stroke: '#4c3a34', 'stroke-width': b[1] }, lg);
+        el('path', { d: b[0], stroke: '#6b564e', 'stroke-width': b[1] * .4, transform: 'translate(-1.4 -1.8)' }, lg);
+        var L = a.getTotalLength();
+        if (b[1] > 9) for (var d = 24; d < L - 20; d += 20 + rnd() * 16) {
+          var q = a.getPointAtLength(d);
+          el('path', { d: 'M' + (q.x - 3).toFixed(1) + ' ' + (q.y - b[1] * .3).toFixed(1) + ' l6 ' + (b[1] * .5).toFixed(1), stroke: '#382a25', 'stroke-width': 1.3 }, lg);
+        }
+      });
+
+      // 3b. some blossom masses in front of the limbs, so the branches dip
+      //     in and out of the crown instead of lying on top of it
+      var front = el('g', { filter: 'url(#' + o.id + '-puff)' }, root);
+      centers.forEach(function (p, ci) {
+        if (ci % 2) return;
+        for (var n = 0; n < 6; n++) {
+          var a = rnd() * 6.283, r = Math.sqrt(rnd()) * 34;
+          var q = { x: p.x + Math.cos(a) * r * 1.3, y: p.y + Math.sin(a) * r * .8 };
+          q.depth = q.y / Math.max(1, edgeY(q.x));
+          var t = reach(q), set = t < .45 ? deep : t < .75 ? mid : lit;
+          el('circle', { cx: q.x.toFixed(1), cy: q.y.toFixed(1), r: (9 + rnd() * 12).toFixed(1),
+                         fill: set[(rnd() * set.length) | 0], opacity: .93 }, front);
+        }
+      });
+
+      // 4. single blooms over everything, thickest along the lit outer edge
+      var fl = el('g', {}, root);
+      var petal = 'M0 0 C-5 -4 -6.5 -12 -2.2 -15.5 L0 -13.2 L2.2 -15.5 C6.5 -12 5 -4 0 0 Z';
+      var placed = 0, guard = 0;
+      while (placed < o.flowers && guard++ < o.flowers * 8) {
+        var p = sample(-14);
+        if (rnd() > .3 + .7 * p.depth) continue;          // favour the edge
+        placed++;
+        var t2 = reach(p), s2 = .55 + rnd() * .6, roll = rnd();
+        var x = p.x, y = p.y, rot = (rnd() * 72).toFixed(0);
+        if (roll < .1) {
+          el('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: (3 * s2).toFixed(1), ry: (4.6 * s2).toFixed(1), fill: '#d4849d',
                           transform: 'rotate(' + ((rnd() - .5) * 60).toFixed(0) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')' }, fl);
           continue;
         }
-        if (r < .2) {         // a fresh leaf
-          el('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: (3.4 * s).toFixed(1), ry: (8 * s).toFixed(1), fill: '#a9b986', opacity: .9,
+        if (roll < .16) {
+          el('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: (3.4 * s2).toFixed(1), ry: (8 * s2).toFixed(1), fill: '#a7b783', opacity: .9,
                           transform: 'rotate(' + ((rnd() - .5) * 140).toFixed(0) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')' }, fl);
           continue;
         }
-        var g2 = el('g', { transform: 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (rnd() * 72).toFixed(0) + ') scale(' + s.toFixed(2) + ')' }, fl);
-        var col = shadesB[(rnd() * shadesB.length) | 0];
-        for (var i2 = 0; i2 < 5; i2++) el('path', { d: petal, fill: col, transform: 'rotate(' + i2 * 72 + ')', stroke: '#d595a9', 'stroke-width': .5 }, g2);
-        el('circle', { r: 3, fill: '#c76a7e' }, g2);
+        var g2 = el('g', { transform: 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + rot + ') scale(' + s2.toFixed(2) + ')' }, fl);
+        var col = t2 < .5 ? (rnd() < .5 ? '#eab6c5' : '#e4a9bb') : (rnd() < .5 ? '#f7dbe2' : '#f2cbd6');
+        for (var i2 = 0; i2 < 5; i2++) el('path', { d: petal, fill: col, transform: 'rotate(' + i2 * 72 + ')', stroke: '#d090a5', 'stroke-width': .5 }, g2);
+        el('circle', { r: 3, fill: '#c46679' }, g2);
         for (var st = 0; st < 5; st++) {
           var sa = st * 1.256 + .3;
-          el('circle', { cx: (Math.cos(sa) * 4.4).toFixed(1), cy: (Math.sin(sa) * 4.4).toFixed(1), r: .9, fill: '#e9c26a' }, g2);
+          el('circle', { cx: (Math.cos(sa) * 4.4).toFixed(1), cy: (Math.sin(sa) * 4.4).toFixed(1), r: .9, fill: '#e8c068' }, g2);
         }
       }
+    }
+
+    // Overhead: the full, shady crown.
+    growCrown(document.getElementById('branch'), {
+      id: 'tl', W: 900, H: 520, clusters: 26, flowers: 300, shade: .5,
+      edge: [[0, 470], [150, 400], [300, 330], [450, 266], [600, 200], [760, 128], [900, 56]],
+      limbs: [['M-40 -10 C80 60 200 120 330 170 C430 208 530 210 610 182', 22],
+              ['M-30 120 C60 170 140 230 206 310', 15],
+              ['M120 70 C180 30 260 10 360 -10', 12],
+              ['M330 170 C380 120 450 90 540 70', 9],
+              ['M206 300 C250 314 300 312 348 294', 7],
+              ['M520 196 C580 168 650 140 726 118', 7],
+              ['M60 250 C44 316 36 372 42 428', 9]]
+    });
+    // Bottom right: the same, lighter and sparer.
+    growCrown(document.getElementById('branch2'), {
+      id: 'br', W: 700, H: 420, flip: true, clusters: 11, flowers: 130, shade: .22,
+      edge: [[0, 400], [120, 340], [260, 250], [400, 170], [540, 100], [700, 46]],
+      limbs: [['M-30 -10 C80 50 200 90 320 120 C400 136 470 122 528 94', 17],
+              ['M-20 110 C60 150 110 206 150 286', 11],
+              ['M320 120 C360 80 420 60 500 50', 8],
+              ['M140 60 C200 30 260 20 330 10', 9]]
     });
   })();
 </script>
