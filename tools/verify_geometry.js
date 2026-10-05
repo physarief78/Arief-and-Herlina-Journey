@@ -10,7 +10,7 @@
  * a set of golden vertices to build/golden.json. This recomputes the same
  * grid positions through rose_geometry.js and compares them.
  *
- *   julia rose_present.jl   &&   node verify_geometry.js
+ *   julia tools/rose_present.jl   &&   node tools/verify_geometry.js
  *
  * Exits non-zero on disagreement, so it can gate a rebuild.
  */
@@ -29,7 +29,7 @@ const here = __dirname;
 const read = (p, what) => {
   const f = path.join(here, p);
   if (!fs.existsSync(f)) {
-    console.error(`missing ${what}: ${p}\n  run:  julia rose_present.jl`);
+    console.error(`missing ${what}: ${p}\n  run:  julia tools/rose_present.jl`);
     process.exit(2);
   }
   return JSON.parse(fs.readFileSync(f, 'utf8'));

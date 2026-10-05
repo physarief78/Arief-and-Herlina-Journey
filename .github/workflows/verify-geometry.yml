@@ -22,4 +22,4 @@ jobs:
           node-version: 22
 
       - name: Compare the JavaScript and Julia geometry
-        run: node verify_geometry.js
+        run: node tools/verify_geometry.js
