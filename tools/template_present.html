@@ -30,37 +30,37 @@
   :root { --ease: cubic-bezier(.22,.61,.36,1); }
 
   /* --------------------------------------------------------------------
-     PAPER. A warm cream near-white rather than pure white -- flat white
+     PAPER. A warm beige rather than pure white -- flat white
      goes clinical under a red flower. No glow, no pulse, no gradient wash:
      the calm comes from space and restraint, and the rose is the only loud
      thing on the page.
      -------------------------------------------------------------------- */
   :root {
-    --bg:            #f9f6ee;
+    --bg:            #f2e8d5;
     /* Transparent, not the page colour: the canvas underneath already clears to the
        same colour, and leaving it open lets the sakura fall behind the
        greeting instead of only appearing once the present is open. */
     --gate-bg:       transparent;
-    --ink:           #1f1c17;
-    --ink-strong:    #1a1712;
-    --ink-2:         #4f4a41;
-    --dim:           #8e877a;
+    --ink:           #2a2118;
+    --ink-strong:    #231b12;
+    --ink-2:         #5a4d3f;
+    --dim:           #96866f;
     --accent:        #a8355b;
-    --hairline:      rgba(31,28,23,.12);
+    --hairline:      rgba(42,33,24,.12);
     --btn-bg:        #c0466b;
     --btn-bg-hover:  #a93a5c;
     --btn-text:      #ffffff;
     --btn-border:    transparent;
     --btn-radius:    10px;
-    --btn-shadow:    0 1px 2px rgba(31,28,23,.09), 0 6px 18px rgba(192,70,107,.18);
-    --btn-shadow-hv: 0 2px 5px rgba(31,28,23,.11), 0 12px 28px rgba(192,70,107,.26);
+    --btn-shadow:    0 1px 2px rgba(42,33,24,.09), 0 6px 18px rgba(192,70,107,.18);
+    --btn-shadow-hv: 0 2px 5px rgba(42,33,24,.11), 0 12px 28px rgba(192,70,107,.26);
     --btn-text-sh:   none;
     --btn-pulse-a:   transparent;   /* a pulsing halo on paper reads as noise */
     --btn-pulse-b:   transparent;
     --btn-ring:      rgba(192,70,107,.5);
-    --chip-bg:       rgba(31,28,23,.05);
-    --chip-border:   rgba(31,28,23,.17);
-    --chip-ink:      #1f1c17;
+    --chip-bg:       rgba(42,33,24,.05);
+    --chip-border:   rgba(42,33,24,.17);
+    --chip-ink:      #2a2118;
     --err:           #a3202f;
   }
   * { box-sizing: border-box; }
@@ -218,9 +218,9 @@
 
   .photo {
     margin: 0; justify-self: center; position: relative;
-    padding: 12px 12px 14px; background: #fffdf8;
+    padding: 12px 12px 14px; background: #fbf3e3;
     border-radius: 6px;
-    box-shadow: 0 1px 2px rgba(31,28,23,.08), 0 18px 48px rgba(31,28,23,.14);
+    box-shadow: 0 1px 2px rgba(42,33,24,.08), 0 18px 48px rgba(42,33,24,.14);
     transform-origin: 50% 60%;
   }
   body:not(.at-cover) .photo.in { transform: rotate(-1.4deg); }
@@ -270,9 +270,9 @@
     gap: 1.1em; width: 100%; text-align: left;
     font: inherit; color: var(--ink); cursor: pointer;
     padding: 1.05em 1.2em; margin: 0;
-    background: rgba(255,253,248,.72);
+    background: rgba(251,243,227,.72);
     border: 1px solid var(--chip-border); border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(31,28,23,.05);
+    box-shadow: 0 1px 2px rgba(42,33,24,.05);
     backdrop-filter: blur(6px);
     transition: transform 300ms var(--ease), box-shadow 340ms var(--ease),
                 border-color 300ms var(--ease), background 300ms var(--ease);
@@ -289,8 +289,8 @@
   }
   .chapter:hover, .chapter:focus-visible {
     transform: translateY(-2px); outline: none;
-    border-color: rgba(192,70,107,.45); background: #fffdf8;
-    box-shadow: 0 2px 6px rgba(31,28,23,.07), 0 14px 30px rgba(192,70,107,.14);
+    border-color: rgba(192,70,107,.45); background: #fbf3e3;
+    box-shadow: 0 2px 6px rgba(42,33,24,.07), 0 14px 30px rgba(192,70,107,.14);
   }
   .chapter:hover .go, .chapter:focus-visible .go { transform: translateX(4px); }
   .chapter:active { transform: none; transition-duration: 110ms; }
@@ -529,7 +529,7 @@
   // with a contact shadow instead, the way a still life sits on a page.
   // =================================================================
   var TH = {
-      clear: 0xf9f6ee, exposure: 0.95,
+      clear: 0xf2e8d5, exposure: 0.95,
       // Soft and flat, but NOT bright. Piling on
       // fill to suit a white page pushes ambient+key past 1.0, the albedo
       // clips, and a crimson rose comes out as pale blush. Total lit-side
