@@ -75,6 +75,30 @@
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   /* Dragging the flower must not start selecting the page behind it; the
      letter opts back in to text selection for itself. */
+  /* ------------------------------------------------------------ SCENERY */
+  /* A quiet watercolour landscape behind everything: distant mountains and a
+     pagoda across a misty valley, seen from a hillside a little above the
+     valley floor, under a sakura branch. Kept pale on purpose -- it is a
+     backdrop for the words, not a second subject. The 3D canvas above it is
+     transparent, so the rose and the falling petals sit in front. */
+  #scenery { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  #scenery svg { position: absolute; display: block; }
+  #land { inset: 0; width: 100%; height: 100%; }
+  #branch {
+    left: 0; top: 0; width: min(54vw, 660px); height: auto;
+    transform-origin: 0 0; animation: sway 11s ease-in-out infinite;
+  }
+  @keyframes sway { 0%,100% { transform: rotate(-.5deg); } 50% { transform: rotate(.7deg); } }
+  #land .mist { animation: drift 38s ease-in-out infinite alternate; }
+  #land .mist.b { animation-duration: 52s; animation-direction: alternate-reverse; }
+  @keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(40px); } }
+  @media (max-width: 880px), (max-aspect-ratio: 5/4) {
+    #branch { width: min(86vw, 520px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #branch, #land .mist { animation: none; }
+  }
+
   #stage { position: fixed; inset: 0; z-index: 0;
            user-select: none; -webkit-user-select: none; }
   /* A second, transparent canvas above everything else on the page. A burst
@@ -413,6 +437,63 @@
 </head>
 <body class="at-cover">
 
+<div id="scenery" aria-hidden="true">
+  <svg id="land" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="sc-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f2e8d5"/>
+        <stop offset=".62" stop-color="#f6ecdb"/>
+        <stop offset="1" stop-color="#f2e8d5"/>
+      </linearGradient>
+      <radialGradient id="sc-sun" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#fbe3c8" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#fbe3c8" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="sc-fuji" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#cfc3c2"/>
+        <stop offset="1" stop-color="#e4d9cb"/>
+      </linearGradient>
+      <linearGradient id="sc-mist" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f7efe1" stop-opacity="0"/>
+        <stop offset=".5" stop-color="#f7efe1" stop-opacity=".92"/>
+        <stop offset="1" stop-color="#f7efe1" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="sc-wash" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="3" seed="11" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feGaussianBlur in="d" stdDeviation="1.4"/>
+      </filter>
+    </defs>
+    <rect width="1600" height="900" fill="url(#sc-sky)"/>
+    <ellipse cx="830" cy="430" rx="520" ry="210" fill="url(#sc-sun)"/>
+    <g filter="url(#sc-wash)">
+      <!-- the far mountain, snow on its crown -->
+      <path d="M330 600 C500 500 640 380 772 278 Q806 254 826 256 Q850 254 888 282 C1020 380 1160 500 1330 600 Z" fill="url(#sc-fuji)" opacity=".85"/>
+      <path d="M742 300 Q796 256 826 256 Q856 256 912 300 C898 312 884 302 870 316 C856 300 842 318 826 306 C812 320 798 302 784 316 C770 304 756 312 742 300 Z" fill="#f8f3ea" opacity=".95"/>
+      <!-- ranges either side -->
+      <path d="M0 640 C110 560 230 500 360 530 C470 496 560 548 680 600 L680 680 L0 680 Z" fill="#d6ccba" opacity=".85"/>
+      <path d="M930 620 C1060 532 1190 500 1320 532 C1430 500 1530 528 1600 566 L1600 690 L930 690 Z" fill="#d4c9b6" opacity=".85"/>
+    </g>
+    <rect class="mist" x="-80" y="560" width="1760" height="120" fill="url(#sc-mist)"/>
+    <g filter="url(#sc-wash)">
+      <!-- the valley's near hills, the pagoda's hill among them -->
+      <path d="M0 724 C210 660 430 646 640 676 C860 636 1090 632 1300 664 C1450 652 1550 672 1600 682 L1640 960 L-40 960 Z" fill="#d5d0b4" opacity=".9"/>
+      <g id="sc-blossom-hills"></g>
+    </g>
+    <g id="sc-pagoda-site">
+      <path filter="url(#sc-wash)" d="M1000 690 C1060 640 1170 628 1260 660 L1270 724 L990 724 Z" fill="#cdc8aa" opacity=".9"/>
+      <g id="sc-pagoda" opacity=".78"></g>
+    </g>
+    <rect class="mist b" x="-80" y="676" width="1760" height="90" fill="url(#sc-mist)" opacity=".8"/>
+    <!-- the slope we are standing on -->
+    <path filter="url(#sc-wash)" d="M0 842 C300 796 700 784 1000 812 C1250 832 1450 822 1600 800 L1640 960 L-40 960 Z" fill="#d8d2b3" opacity=".95"/>
+    <g id="sc-grass" stroke="#bdb594" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".45"></g>
+  </svg>
+  <svg id="branch" viewBox="0 0 900 520">
+    <g id="sc-limbs" fill="none" stroke-linecap="round"></g>
+    <g id="sc-flowers"></g>
+  </svg>
+</div>
 <div id="stage"></div>
 <div id="front" aria-hidden="true"></div>
 
@@ -466,6 +547,95 @@
 
 <div id="err"></div>
 
+<script>
+  // Scenery: the pieces that are easier to place in a loop than by hand --
+  // the distant pagoda, blossom on the valley hills, grass on our slope, and
+  // the sakura branch overhead with its five-petal flowers.
+  (function () {
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, a, parent) {
+      var e = document.createElementNS(NS, tag);
+      for (var k in a) e.setAttribute(k, a[k]);
+      parent.appendChild(e); return e;
+    }
+    var seed = 1029;
+    function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+
+    // The pagoda, five storeys, small with distance.
+    var pg = document.getElementById('sc-pagoda'), cx = 1130, base = 664;
+    var tiers = [[34, 20], [29, 17], [25, 15], [21, 13], [18, 12]], y = base;
+    tiers.forEach(function (t) {
+      var w = t[0], h = t[1], wall = w * .48;
+      el('rect', { x: cx - wall, y: y - h + 4, width: wall * 2, height: h - 4, fill: '#b98473' }, pg);
+      y -= h;
+      el('path', { d: 'M' + (cx - w) + ' ' + (y + 5) + ' Q' + (cx - w * .5) + ' ' + (y + 2) + ' ' + (cx - w * .3) + ' ' + (y - 4) +
+                      ' L' + (cx + w * .3) + ' ' + (y - 4) + ' Q' + (cx + w * .5) + ' ' + (y + 2) + ' ' + (cx + w) + ' ' + (y + 5) + ' Z',
+                   fill: '#8f7368' }, pg);
+    });
+    el('path', { d: 'M' + cx + ' ' + (y - 4) + ' L' + cx + ' ' + (y - 36), stroke: '#8f7368', 'stroke-width': 2.4 }, pg);
+
+    // Sakura in bloom dotted over the valley hills.
+    var bh = document.getElementById('sc-blossom-hills');
+    [[120, 700], [260, 680], [420, 668], [560, 676], [720, 664], [880, 652], [1000, 660], [1280, 660], [1420, 668], [1540, 680]].forEach(function (c) {
+      for (var n = 0; n < 6; n++)
+        el('circle', { cx: c[0] + (rnd() - .5) * 60, cy: c[1] + (rnd() - .5) * 14, r: 8 + rnd() * 10,
+                       fill: rnd() < .5 ? '#ecc9cf' : '#e3b8c1', opacity: .7 }, bh);
+    });
+
+    // Grass on the slope in front of us.
+    var gr = document.getElementById('sc-grass');
+    for (var g = 0; g < 46; g++) {
+      var gx = rnd() * 1600, gy = 836 + rnd() * 64, gh = 5 + rnd() * 9, lean = (rnd() - .5) * 8;
+      el('path', { d: 'M' + gx.toFixed(0) + ' ' + gy.toFixed(0) + ' q' + (lean / 2).toFixed(1) + ' ' + (-gh / 2).toFixed(1) + ' ' + lean.toFixed(1) + ' ' + (-gh).toFixed(1) }, gr);
+    }
+
+    // The landscape is cropped to fill the screen, so a tall phone sees only
+    // its middle. Slide the pagoda's hill to the right-hand side of whatever
+    // is visible: far right on a wide screen (clear of the letter), a little
+    // further in on a narrow one.
+    var site = document.getElementById('sc-pagoda-site');
+    function placePagoda() {
+      var W = window.innerWidth, H = window.innerHeight;
+      var sc = Math.max(W / 1600, H / 900), visW = W / sc, x0 = 800 - visW / 2;
+      var narrow = W < 880 || W / Math.max(H, 1) < 1.25;
+      var target = x0 + visW * (narrow ? .86 : .9);
+      site.setAttribute('transform', 'translate(' + (target - 1130).toFixed(1) + ' 0)');
+    }
+    placePagoda();
+    window.addEventListener('resize', placePagoda);
+
+    // The branch overhead: a limb in from the top-left corner, with twigs.
+    var limbs = document.getElementById('sc-limbs'), fl = document.getElementById('sc-flowers');
+    var paths = [
+      ['M-30 30 C120 70 260 70 420 120 C540 158 660 168 780 150', 15],
+      ['M200 66 C230 120 250 170 300 220', 7],
+      ['M420 120 C450 70 500 40 560 22', 6],
+      ['M560 150 C590 200 630 240 690 262', 6],
+      ['M300 220 C340 250 380 262 430 262', 4],
+      ['M690 150 C740 120 790 104 850 100', 4],
+      ['M90 52 C110 100 120 150 110 196', 5]
+    ];
+    var pts = [];
+    paths.forEach(function (p) {
+      var a = el('path', { d: p[0], stroke: '#5c4840', 'stroke-width': p[1] }, limbs);
+      el('path', { d: p[0], stroke: '#7a6258', 'stroke-width': p[1] * .3, transform: 'translate(-1.5 -1.5)' }, limbs);
+      var L = a.getTotalLength();
+      for (var d = L * .25; d < L; d += 26 + rnd() * 18) pts.push(a.getPointAtLength(d));
+    });
+    // Five-petal blossoms clustered along the twigs.
+    var petal = 'M0 0 C-5 -4 -6 -12 -2 -15 L0 -13 L2 -15 C6 -12 5 -4 0 0 Z';
+    pts.forEach(function (p) {
+      for (var k = 0; k < 3; k++) {
+        var x = p.x + (rnd() - .5) * 34, y = p.y + (rnd() - .5) * 26, s = .75 + rnd() * .65;
+        var g = el('g', { transform: 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (rnd() * 72).toFixed(0) + ') scale(' + s.toFixed(2) + ')' }, fl);
+        var col = rnd() < .5 ? '#f3cfd8' : '#eebccb';
+        for (var i = 0; i < 5; i++) el('path', { d: petal, fill: col, transform: 'rotate(' + i * 72 + ')', stroke: '#d99aae', 'stroke-width': .5 }, g);
+        el('circle', { r: 2.6, fill: '#c9707f' }, g);
+        el('circle', { r: 1.1, fill: '#f2d48a' }, g);
+      }
+    });
+  })();
+</script>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -760,8 +930,9 @@
   // Renderer
   // =================================================================
   var host = document.getElementById('stage');
-  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-  renderer.setClearColor(TH.clear, 1);
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  // Transparent: the watercolour scenery behind shows through.
+  renderer.setClearColor(TH.clear, 0);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = TH.exposure;
