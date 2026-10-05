@@ -75,6 +75,52 @@
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   /* Dragging the flower must not start selecting the page behind it; the
      letter opts back in to text selection for itself. */
+  /* ------------------------------------------------------------ SCENERY */
+  /* A quiet watercolour landscape behind everything: distant mountains and a
+     pagoda across a misty valley, seen from a hillside a little above the
+     valley floor, under a sakura branch. Kept pale on purpose -- it is a
+     backdrop for the words, not a second subject. The 3D canvas above it is
+     transparent, so the rose and the falling petals sit in front. */
+  #scenery { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  #scenery svg { position: absolute; display: block; }
+  #land { inset: 0; width: 100%; height: 100%; }
+  /* Two crowns of cherry blossom reaching into the corners: a full, shady
+     one overhead at the top left, a lighter one at the bottom right. Each
+     casts a faint shade on the page beneath it. */
+  #shade {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 52% 46% at 0 0, rgba(118,74,78,.15), rgba(118,74,78,0) 72%),
+      radial-gradient(ellipse 34% 30% at 100% 100%, rgba(118,74,78,.07), rgba(118,74,78,0) 72%);
+  }
+  #branch {
+    left: 0; top: 0; width: min(56vw, 690px); height: auto;
+    transform-origin: 0 0; animation: sway 11s ease-in-out infinite;
+  }
+  #branch2 {
+    right: 0; bottom: 0; width: min(36vw, 460px); height: auto;
+    transform-origin: 100% 100%; animation: sway 13s ease-in-out infinite reverse;
+    transition: opacity 1200ms var(--ease);
+  }
+  /* The letter's last lines run down into the lower crown; let it recede. */
+  body:has(#letter.show) #branch2 { opacity: .3; }
+  @keyframes sway { 0%,100% { transform: rotate(-.5deg); } 50% { transform: rotate(.7deg); } }
+  #land .mist { animation: drift 38s ease-in-out infinite alternate; }
+  #land .mist.b { animation-duration: 52s; animation-direction: alternate-reverse; }
+  @keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(40px); } }
+  #sc-near-tree, #sc-pagoda-site { transition: opacity 1200ms var(--ease); }
+  @media (max-width: 880px), (max-aspect-ratio: 5/4) {
+    #branch { width: min(88vw, 520px); }
+    #branch2 { width: min(62vw, 340px); }
+    /* Stacked, the letter's lines run straight over the near tree and the
+       pagoda; let them recede while it is open. */
+    body:has(#letter.show) #sc-near-tree,
+    body:has(#letter.show) #sc-pagoda-site { opacity: .28; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #branch, #branch2, #land .mist { animation: none; }
+  }
+
   #stage { position: fixed; inset: 0; z-index: 0;
            user-select: none; -webkit-user-select: none; }
   /* A second, transparent canvas above everything else on the page. A burst
@@ -413,6 +459,67 @@
 </head>
 <body class="at-cover">
 
+<div id="scenery" aria-hidden="true">
+  <svg id="land" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="sc-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f2e8d5"/>
+        <stop offset=".62" stop-color="#f6ecdb"/>
+        <stop offset="1" stop-color="#f2e8d5"/>
+      </linearGradient>
+      <radialGradient id="sc-sun" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#fbe3c8" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#fbe3c8" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="sc-fuji" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#cfc3c2"/>
+        <stop offset="1" stop-color="#e4d9cb"/>
+      </linearGradient>
+      <linearGradient id="sc-mist" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f7efe1" stop-opacity="0"/>
+        <stop offset=".5" stop-color="#f7efe1" stop-opacity=".92"/>
+        <stop offset="1" stop-color="#f7efe1" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="sc-wash" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="3" seed="11" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feGaussianBlur in="d" stdDeviation="1.4"/>
+      </filter>
+    </defs>
+    <rect width="1600" height="900" fill="url(#sc-sky)"/>
+    <ellipse cx="830" cy="430" rx="520" ry="210" fill="url(#sc-sun)"/>
+    <g filter="url(#sc-wash)">
+      <!-- the far mountain, snow on its crown -->
+      <path d="M330 600 C500 500 640 380 772 278 Q806 254 826 256 Q850 254 888 282 C1020 380 1160 500 1330 600 Z" fill="url(#sc-fuji)" opacity=".85"/>
+      <path d="M742 300 Q796 256 826 256 Q856 256 912 300 C898 312 884 302 870 316 C856 300 842 318 826 306 C812 320 798 302 784 316 C770 304 756 312 742 300 Z" fill="#f8f3ea" opacity=".95"/>
+      <!-- ranges either side -->
+      <path d="M0 640 C110 560 230 500 360 530 C470 496 560 548 680 600 L680 680 L0 680 Z" fill="#d6ccba" opacity=".85"/>
+      <path d="M930 620 C1060 532 1190 500 1320 532 C1430 500 1530 528 1600 566 L1600 690 L930 690 Z" fill="#d4c9b6" opacity=".85"/>
+      <!-- forest at the foot of the ranges, conifers up their flanks -->
+      <g id="sc-forest"></g>
+    </g>
+    <rect class="mist" x="-80" y="560" width="1760" height="120" fill="url(#sc-mist)"/>
+    <g filter="url(#sc-wash)">
+      <!-- the valley's near hills, the pagoda's hill among them -->
+      <path d="M0 724 C210 660 430 646 640 676 C860 636 1090 632 1300 664 C1450 652 1550 672 1600 682 L1640 960 L-40 960 Z" fill="#d5d0b4" opacity=".9"/>
+    </g>
+    <!-- cherry trees in bloom across the valley -->
+    <g id="sc-blossom-hills"></g>
+    <g id="sc-pagoda-site">
+      <path filter="url(#sc-wash)" d="M1000 690 C1060 640 1170 628 1260 660 L1270 724 L990 724 Z" fill="#cdc8aa" opacity=".9"/>
+      <g id="sc-pagoda" opacity=".78"></g>
+    </g>
+    <rect class="mist b" x="-80" y="676" width="1760" height="90" fill="url(#sc-mist)" opacity=".8"/>
+    <!-- the slope we are standing on -->
+    <path filter="url(#sc-wash)" d="M0 842 C300 796 700 784 1000 812 C1250 832 1450 822 1600 800 L1640 960 L-40 960 Z" fill="#d8d2b3" opacity=".95"/>
+    <g id="sc-grass" stroke="#bdb594" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".45"></g>
+    <!-- a big cherry on our own slope, to one side -->
+    <g id="sc-near-tree"></g>
+  </svg>
+  <div id="shade"></div>
+  <svg id="branch" viewBox="0 0 900 520"></svg>
+  <svg id="branch2" viewBox="0 0 700 420"></svg>
+</div>
 <div id="stage"></div>
 <div id="front" aria-hidden="true"></div>
 
@@ -466,6 +573,265 @@
 
 <div id="err"></div>
 
+<script>
+  // Scenery: the pieces that are easier to place in a loop than by hand --
+  // the distant pagoda, blossom on the valley hills, grass on our slope, and
+  // the sakura branch overhead with its five-petal flowers.
+  (function () {
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, a, parent) {
+      var e = document.createElementNS(NS, tag);
+      for (var k in a) e.setAttribute(k, a[k]);
+      parent.appendChild(e); return e;
+    }
+    var seed = 1029;
+    function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+
+    // The pagoda, five storeys, small with distance.
+    var pg = document.getElementById('sc-pagoda'), cx = 1130, base = 664;
+    var tiers = [[34, 20], [29, 17], [25, 15], [21, 13], [18, 12]], y = base;
+    tiers.forEach(function (t) {
+      var w = t[0], h = t[1], wall = w * .48;
+      el('rect', { x: cx - wall, y: y - h + 4, width: wall * 2, height: h - 4, fill: '#b98473' }, pg);
+      y -= h;
+      el('path', { d: 'M' + (cx - w) + ' ' + (y + 5) + ' Q' + (cx - w * .5) + ' ' + (y + 2) + ' ' + (cx - w * .3) + ' ' + (y - 4) +
+                      ' L' + (cx + w * .3) + ' ' + (y - 4) + ' Q' + (cx + w * .5) + ' ' + (y + 2) + ' ' + (cx + w) + ' ' + (y + 5) + ' Z',
+                   fill: '#8f7368' }, pg);
+    });
+    el('path', { d: 'M' + cx + ' ' + (y - 4) + ' L' + cx + ' ' + (y - 36), stroke: '#8f7368', 'stroke-width': 2.4 }, pg);
+
+    // A cherry tree: a short trunk and a canopy of overlapping puffs, lit
+    // from above. Used for the valley trees and, much larger, the near one.
+    var PINKS = ['#f3d3da', '#ecc3ce', '#e3b1c0', '#f8e3e7'];
+    function cherry(parent, x, y, s, dim) {
+      var g = el('g', { opacity: dim }, parent);
+      el('path', { d: 'M' + x + ' ' + y + ' C' + (x - 1 * s) + ' ' + (y - 10 * s) + ' ' + (x + 2 * s) + ' ' + (y - 18 * s) + ' ' + x + ' ' + (y - 26 * s) +
+                      ' M' + x + ' ' + (y - 16 * s) + ' l' + (-8 * s) + ' ' + (-9 * s) + ' M' + x + ' ' + (y - 19 * s) + ' l' + (7 * s) + ' ' + (-8 * s),
+                   stroke: '#9c8478', 'stroke-width': Math.max(1.2, 2.4 * s), fill: 'none', 'stroke-linecap': 'round' }, g);
+      for (var n = 0; n < 9; n++) {
+        var a = rnd() * 6.283, r = Math.sqrt(rnd()) * 15 * s;
+        var cy = y - 34 * s + Math.sin(a) * r * .65;
+        el('circle', { cx: (x + Math.cos(a) * r * 1.25).toFixed(1), cy: cy.toFixed(1), r: ((6 + rnd() * 6) * s).toFixed(1),
+                       fill: cy < y - 36 * s ? PINKS[(rnd() * 2) | 0 ? 3 : 0] : PINKS[1 + ((rnd() * 2) | 0)] }, g);
+      }
+      return g;
+    }
+
+    // Forest along the foot of each range, and conifers climbing them.
+    var fo = document.getElementById('sc-forest');
+    function treeline(x0, x1, base, col) {
+      var d = 'M' + x0 + ' ' + (base + 40);
+      for (var x = x0; x <= x1; x += 9) d += ' L' + x + ' ' + (base - 6 - rnd() * 14 - (x % 27 === 0 ? 8 : 0)).toFixed(1);
+      el('path', { d: d + ' L' + x1 + ' ' + (base + 40) + ' Z', fill: col, opacity: .85 }, fo);
+    }
+    treeline(0, 690, 640, '#c6c3a4');
+    treeline(920, 1600, 650, '#c3c1a1');
+    function conifer(x, y, s, col) {
+      var d = '';
+      for (var t = 0; t < 3; t++) {
+        var ty = y - t * 6 * s, w = (8 - t * 2) * s;
+        d += 'M' + (x - w) + ' ' + ty + ' L' + x + ' ' + (ty - 10 * s) + ' L' + (x + w) + ' ' + ty + ' Z ';
+      }
+      el('path', { d: d, fill: col, opacity: .5 }, fo);
+    }
+    [[70, 600], [120, 590], [180, 572], [250, 548], [300, 556], [420, 540], [470, 556], [540, 576], [600, 600],
+     [990, 604], [1060, 580], [1110, 560], [1180, 540], [1240, 548], [1350, 540], [1420, 530], [1480, 548], [1540, 560]].forEach(function (c) {
+      for (var k = 0; k < 3; k++) conifer(c[0] + (rnd() - .5) * 40, c[1] + rnd() * 30, .8 + rnd() * .6, rnd() < .5 ? '#b5b396' : '#a9ab8e');
+    });
+
+    // Cherry trees across the valley, smaller and paler with distance.
+    var bh = document.getElementById('sc-blossom-hills');
+    for (var v = 0; v < 34; v++) {
+      var vx = rnd() * 1600, row = rnd();
+      var vy = 668 + row * 70 + Math.sin(vx / 180) * 8;                // nearer rows sit lower
+      cherry(bh, vx, vy, .55 + row * .75, .55 + row * .3);
+    }
+
+    // Grass on the slope in front of us.
+    var gr = document.getElementById('sc-grass');
+    for (var g = 0; g < 46; g++) {
+      var gx = rnd() * 1600, gy = 836 + rnd() * 64, gh = 5 + rnd() * 9, lean = (rnd() - .5) * 8;
+      el('path', { d: 'M' + gx.toFixed(0) + ' ' + gy.toFixed(0) + ' q' + (lean / 2).toFixed(1) + ' ' + (-gh / 2).toFixed(1) + ' ' + lean.toFixed(1) + ' ' + (-gh).toFixed(1) }, gr);
+    }
+
+    // The near cherry: a broad old tree on our slope, gnarled trunk and a
+    // wide crown of blossom.
+    var near = document.getElementById('sc-near-tree');
+    var nt = el('g', {}, near);
+    [['M120 900 C112 840 128 800 116 752 C106 712 126 690 150 668', 26],
+     ['M116 752 C80 726 52 700 28 668', 12], ['M150 668 C190 650 226 646 262 630', 11],
+     ['M150 668 C146 640 154 616 172 596', 9], ['M128 700 C100 680 92 650 96 624', 7]].forEach(function (b) {
+      el('path', { d: b[0], stroke: '#6e5a50', 'stroke-width': b[1], fill: 'none', 'stroke-linecap': 'round' }, nt);
+      el('path', { d: b[0], stroke: '#8a746a', 'stroke-width': b[1] * .28, fill: 'none', 'stroke-linecap': 'round', transform: 'translate(-3 -1)' }, nt);
+    });
+    var crown = el('g', { filter: 'url(#sc-wash)' }, nt);
+    [[30, 650], [80, 618], [140, 600], [200, 612], [260, 618], [96, 660], [170, 640], [230, 650], [60, 690], [300, 640], [10, 620]].forEach(function (c) {
+      for (var n = 0; n < 9; n++) {
+        var a = rnd() * 6.283, r = Math.sqrt(rnd()) * 36, cy = c[1] + Math.sin(a) * r * .7;
+        el('circle', { cx: (c[0] + Math.cos(a) * r * 1.3).toFixed(1), cy: cy.toFixed(1), r: (10 + rnd() * 12).toFixed(1),
+                       fill: cy < c[1] - 6 ? PINKS[rnd() < .5 ? 3 : 0] : PINKS[1 + ((rnd() * 2) | 0)], opacity: .92 }, crown);
+      }
+    });
+
+    // The landscape is cropped to fill the screen, so a tall phone sees only
+    // its middle. Slide the pagoda's hill to the right-hand side of whatever
+    // is visible: far right on a wide screen (clear of the letter), a little
+    // further in on a narrow one. The near cherry keeps to the left edge.
+    var site = document.getElementById('sc-pagoda-site');
+    function placeScenery() {
+      var W = window.innerWidth, H = window.innerHeight;
+      var sc = Math.max(W / 1600, H / 900), visW = W / sc, x0 = 800 - visW / 2;
+      var narrow = W < 880 || W / Math.max(H, 1) < 1.25;
+      var target = x0 + visW * (narrow ? .86 : .9);
+      site.setAttribute('transform', 'translate(' + (target - 1130).toFixed(1) + ' 0)');
+      var ns = narrow ? .62 : 1;
+      near.setAttribute('transform', 'translate(' + (x0 - (narrow ? 150 : 40) * ns).toFixed(1) + ' ' + (900 * (1 - ns)).toFixed(1) + ') scale(' + ns + ')');
+    }
+    placeScenery();
+    window.addEventListener('resize', placeScenery);
+
+    // A crown of cherry blossom growing out of a corner. Built in "corner
+    // space" -- the corner at (0, 0), the crown spreading right and down to a
+    // lower edge -- so the same recipe serves the top-left (as is) and the
+    // bottom-right (turned half a circle).
+    //   edge      the crown's outer boundary, as [x, y] points left to right
+    //   limbs     [path, width] for the branches showing through
+    //   clusters  how many masses of blossom; flowers: how many single blooms
+    //   shade     strength of the deep-rose shadow inside the crown
+    function growCrown(svg, o) {
+      var W = o.W, H = o.H;
+      var root = el('g', o.flip ? { transform: 'rotate(180 ' + W / 2 + ' ' + H / 2 + ')' } : {}, svg);
+      var defs = el('defs', {}, svg);
+      var soft = el('filter', { id: o.id + '-soft', x: '-20%', y: '-20%', width: '140%', height: '140%' }, defs);
+      el('feGaussianBlur', { stdDeviation: 9 }, soft);
+      var puff = el('filter', { id: o.id + '-puff', x: '-10%', y: '-10%', width: '120%', height: '120%' }, defs);
+      el('feTurbulence', { type: 'fractalNoise', baseFrequency: .07, numOctaves: 2, seed: 5, result: 'n' }, puff);
+      el('feDisplacementMap', { 'in': 'SourceGraphic', in2: 'n', scale: 7, xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' }, puff);
+      el('feGaussianBlur', { 'in': 'd', stdDeviation: .8 }, puff);
+
+      function edgeY(x) {
+        var e = o.edge;
+        if (x <= e[0][0]) return e[0][1];
+        for (var k = 1; k < e.length; k++) if (x <= e[k][0]) {
+          var t = (x - e[k - 1][0]) / (e[k][0] - e[k - 1][0]);
+          return e[k - 1][1] + (e[k][1] - e[k - 1][1]) * t;
+        }
+        return e[e.length - 1][1];
+      }
+      function sample(margin) {
+        for (var tries = 0; tries < 60; tries++) {
+          var x = rnd() * W, y = rnd() * H;
+          if (y < edgeY(x) - margin) return { x: x, y: y, depth: y / Math.max(1, edgeY(x)) };
+        }
+        return { x: 20, y: 20, depth: 0 };
+      }
+      // How far out from the trunk: 0 at the corner, 1 at the edge.
+      function reach(p) { return Math.min(1, Math.hypot(p.x / W, p.y / H) / .9 * .5 + p.depth * .5); }
+
+      // 1. the shade inside the crown
+      var sh = el('g', { filter: 'url(#' + o.id + '-soft)', opacity: o.shade }, root);
+      var centers = [];
+      for (var c = 0; c < o.clusters; c++) centers.push(sample(24));
+      centers.forEach(function (p) {
+        el('ellipse', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), rx: (60 + rnd() * 60).toFixed(1), ry: (40 + rnd() * 34).toFixed(1),
+                        fill: rnd() < .5 ? '#b97b93' : '#c78ea3' }, sh);
+      });
+
+      // 2. masses of blossom: deeper toward the trunk, lighter toward the edge
+      var vol = el('g', { filter: 'url(#' + o.id + '-puff)' }, root);
+      var deep = ['#d397ac', '#cf8fa6', '#dba4b7'], mid = ['#e6b2c2', '#ebbecb', '#e2abbd'], lit = ['#f2cdd7', '#f6dbe2', '#efc4d0'];
+      centers.forEach(function (p) {
+        for (var n = 0; n < 13; n++) {
+          var a = rnd() * 6.283, r = Math.sqrt(rnd()) * 46;
+          var q = { x: p.x + Math.cos(a) * r * 1.3, y: p.y + Math.sin(a) * r * .8 };
+          q.depth = q.y / Math.max(1, edgeY(q.x));
+          var t = reach(q), set = t < .45 ? deep : t < .75 ? mid : lit;
+          el('circle', { cx: q.x.toFixed(1), cy: q.y.toFixed(1), r: (11 + rnd() * 15).toFixed(1),
+                         fill: set[(rnd() * set.length) | 0], opacity: .9 }, vol);
+        }
+      });
+
+      // 3. limbs showing through the blossom, with a few bark nicks
+      var lg = el('g', { fill: 'none', 'stroke-linecap': 'round' }, root);
+      o.limbs.forEach(function (b) {
+        var a = el('path', { d: b[0], stroke: '#4c3a34', 'stroke-width': b[1] }, lg);
+        el('path', { d: b[0], stroke: '#6b564e', 'stroke-width': b[1] * .4, transform: 'translate(-1.4 -1.8)' }, lg);
+        var L = a.getTotalLength();
+        if (b[1] > 9) for (var d = 24; d < L - 20; d += 20 + rnd() * 16) {
+          var q = a.getPointAtLength(d);
+          el('path', { d: 'M' + (q.x - 3).toFixed(1) + ' ' + (q.y - b[1] * .3).toFixed(1) + ' l6 ' + (b[1] * .5).toFixed(1), stroke: '#382a25', 'stroke-width': 1.3 }, lg);
+        }
+      });
+
+      // 3b. some blossom masses in front of the limbs, so the branches dip
+      //     in and out of the crown instead of lying on top of it
+      var front = el('g', { filter: 'url(#' + o.id + '-puff)' }, root);
+      centers.forEach(function (p, ci) {
+        if (ci % 2) return;
+        for (var n = 0; n < 6; n++) {
+          var a = rnd() * 6.283, r = Math.sqrt(rnd()) * 34;
+          var q = { x: p.x + Math.cos(a) * r * 1.3, y: p.y + Math.sin(a) * r * .8 };
+          q.depth = q.y / Math.max(1, edgeY(q.x));
+          var t = reach(q), set = t < .45 ? deep : t < .75 ? mid : lit;
+          el('circle', { cx: q.x.toFixed(1), cy: q.y.toFixed(1), r: (9 + rnd() * 12).toFixed(1),
+                         fill: set[(rnd() * set.length) | 0], opacity: .93 }, front);
+        }
+      });
+
+      // 4. single blooms over everything, thickest along the lit outer edge
+      var fl = el('g', {}, root);
+      var petal = 'M0 0 C-5 -4 -6.5 -12 -2.2 -15.5 L0 -13.2 L2.2 -15.5 C6.5 -12 5 -4 0 0 Z';
+      var placed = 0, guard = 0;
+      while (placed < o.flowers && guard++ < o.flowers * 8) {
+        var p = sample(-14);
+        if (rnd() > .3 + .7 * p.depth) continue;          // favour the edge
+        placed++;
+        var t2 = reach(p), s2 = .55 + rnd() * .6, roll = rnd();
+        var x = p.x, y = p.y, rot = (rnd() * 72).toFixed(0);
+        if (roll < .1) {
+          el('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: (3 * s2).toFixed(1), ry: (4.6 * s2).toFixed(1), fill: '#d4849d',
+                          transform: 'rotate(' + ((rnd() - .5) * 60).toFixed(0) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')' }, fl);
+          continue;
+        }
+        if (roll < .16) {
+          el('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: (3.4 * s2).toFixed(1), ry: (8 * s2).toFixed(1), fill: '#a7b783', opacity: .9,
+                          transform: 'rotate(' + ((rnd() - .5) * 140).toFixed(0) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')' }, fl);
+          continue;
+        }
+        var g2 = el('g', { transform: 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + rot + ') scale(' + s2.toFixed(2) + ')' }, fl);
+        var col = t2 < .5 ? (rnd() < .5 ? '#eab6c5' : '#e4a9bb') : (rnd() < .5 ? '#f7dbe2' : '#f2cbd6');
+        for (var i2 = 0; i2 < 5; i2++) el('path', { d: petal, fill: col, transform: 'rotate(' + i2 * 72 + ')', stroke: '#d090a5', 'stroke-width': .5 }, g2);
+        el('circle', { r: 3, fill: '#c46679' }, g2);
+        for (var st = 0; st < 5; st++) {
+          var sa = st * 1.256 + .3;
+          el('circle', { cx: (Math.cos(sa) * 4.4).toFixed(1), cy: (Math.sin(sa) * 4.4).toFixed(1), r: .9, fill: '#e8c068' }, g2);
+        }
+      }
+    }
+
+    // Overhead: the full, shady crown.
+    growCrown(document.getElementById('branch'), {
+      id: 'tl', W: 900, H: 520, clusters: 26, flowers: 300, shade: .5,
+      edge: [[0, 470], [150, 400], [300, 330], [450, 266], [600, 200], [760, 128], [900, 56]],
+      limbs: [['M-40 -10 C80 60 200 120 330 170 C430 208 530 210 610 182', 22],
+              ['M-30 120 C60 170 140 230 206 310', 15],
+              ['M120 70 C180 30 260 10 360 -10', 12],
+              ['M330 170 C380 120 450 90 540 70', 9],
+              ['M206 300 C250 314 300 312 348 294', 7],
+              ['M520 196 C580 168 650 140 726 118', 7],
+              ['M60 250 C44 316 36 372 42 428', 9]]
+    });
+    // Bottom right: the same, lighter and sparer.
+    growCrown(document.getElementById('branch2'), {
+      id: 'br', W: 700, H: 420, flip: true, clusters: 11, flowers: 130, shade: .22,
+      edge: [[0, 400], [120, 340], [260, 250], [400, 170], [540, 100], [700, 46]],
+      limbs: [['M-30 -10 C80 50 200 90 320 120 C400 136 470 122 528 94', 17],
+              ['M-20 110 C60 150 110 206 150 286', 11],
+              ['M320 120 C360 80 420 60 500 50', 8],
+              ['M140 60 C200 30 260 20 330 10', 9]]
+    });
+  })();
+</script>
 <script>/*__THREE_JS__*/</script>
 <script>/*__ROSE_GEOMETRY__*/</script>
 <script>
@@ -574,8 +940,9 @@
   // Renderer
   // =================================================================
   var host = document.getElementById('stage');
-  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-  renderer.setClearColor(TH.clear, 1);
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  // Transparent: the watercolour scenery behind shows through.
+  renderer.setClearColor(TH.clear, 0);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = TH.exposure;
