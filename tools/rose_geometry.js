@@ -1,12 +1,12 @@
 /*
- * rose_geometry.js - the rose surface, ported from rose.jl
+ * rose_geometry.js - the rose surface, ported from the original Julia model
  *
  * This is the SINGLE source of the JavaScript geometry. It is loaded by
- * verify_geometry.mjs (Node) and inlined into the generated page by
+ * verify_geometry.js (Node) and inlined into the generated page by
  * rose_present.jl. Do not copy this math anywhere else -- if it exists in two
  * places it will drift, and `npm`-free as this project is, nothing would catch it.
  *
- * The Julia side keeps rose.jl's original vectorised expressions untouched, so
+ * rose_present.jl keeps the original vectorised expressions untouched, so
  * the cross-check compares this port against the real thing rather than against
  * a restatement of itself.
  *
@@ -19,16 +19,15 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  // Matches rose.jl exactly.
+  // Matches the original Julia model exactly.
   var DEFAULTS = { ppr: 3.6, nr: 30, pr: 30, pn: 40, pf: 2.0, ps: 1.25 };
 
-  // Bloom keyframes, taken from the ol_start/ol_end ranges already used by
-  // rose_animation.jl's GLMakie render.
+  // Bloom keyframes, from the openness ranges of the original Julia render.
   var STAGES = {
     bud:      [0.05, 0.25],
     cracking: [0.10, 0.50],
     opening:  [0.15, 0.75],
-    open:     [0.20, 1.02],   // the pose the current Eid_Mubarak_Erlin.html is frozen at
+    open:     [0.20, 1.02],   // a fully open rose
     bloom:    [0.22, 1.10],
     reflexed: [0.25, 1.40]
   };
@@ -69,7 +68,7 @@
     var y  = p.pf * R * R * w * w * b.sp;
     var R2 = b.m * (R * b.sp) + y * b.cp;
     var x  = R2 * b.st, z2 = R2 * b.ct, z = b.m * (R * b.cp - y * b.sp);
-    // rose.jl names these X, Y, Z with Y = R2*cos(theta). Kept identical here;
+    // The Julia model names these X, Y, Z with Y = R2*cos(theta). Kept identical here;
     // the renderer does the Z-up -> Y-up swap at upload time, not in the math.
     return { x: x, y: z2, z: z, c: Math.sqrt(x * x + z2 * z2 + z * z) };
   }

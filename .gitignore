@@ -1,24 +1,8 @@
-# Rendered animation frames and captures
-/frames_glmakie/
-*.gif
-*.mp4
-
 # Generated verification output: keep the fixtures required by CI
-/build/*
-!/build/golden.json
-!/build/rose_params.json
-
-# Superseded standalone page exports
-/Eid_Mubarak_Erlin.html
-/Selamat Hari Raya Erlin.html
-/Selamat Ulang Tahun Erlin.html
-/Selamat Ulang Tahun Erlin_responsive.html
-/Selamat Ulang Tahun Erlin edit.html
+/tools/build/*
+!/tools/build/golden.json
+!/tools/build/rose_params.json
 
 # Local editor and assistant state
 /.claude/
 /.vscode/
-
-# Python cache files
-__pycache__/
-*.py[cod]

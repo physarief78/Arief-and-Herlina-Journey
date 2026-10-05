@@ -1,20 +1,15 @@
 #!/usr/bin/env julia
 # =====================================================================
-#  rose_present.jl  --  generator for Happy_Birthday_Erlin.html
+#  rose_present.jl  --  generator for ../index.html
 #
-#  Replaces the approach in rose.jl. That script evaluated the surface
-#  once and serialised all 36,030 vertices into the page as literal JSON,
-#  which is where Eid_Mubarak_Erlin.html's 5.6 MB comes from -- roughly
-#  99% of that file is coordinates describing ONE frozen pose.
-#
-#  Here the page carries the *formula* instead of the *data*: the browser
+#  The page carries the *formula* instead of the *data*: the browser
 #  rebuilds the mesh from parameters (measured at ~0.4 ms for the full
 #  36k-vertex grid, about 2% of a 60 fps frame budget). That makes the
 #  bloom continuously scrubbable rather than a fixed set of frames, and
 #  drops the page to roughly 640 KB -- of which 608 KB is three.js,
-#  inlined so the gift opens with no internet at all.
+#  inlined so the page opens with no internet at all.
 #
-#  The math below is copied verbatim from rose.jl and deliberately left
+#  The math below is the original Julia rose model, deliberately left
 #  in its original vectorised form. rose_geometry.js re-expresses it as a
 #  scalar loop; verify_geometry.js checks the two agree. If this file is
 #  ever "tidied" to match the JS structure, that check becomes circular
@@ -22,7 +17,7 @@
 #
 #  Zero package dependencies -- runs on a bare Julia install.
 #
-#  Usage:  julia rose_present.jl
+#  Usage:  julia tools/rose_present.jl
 # =====================================================================
 
 using Printf
@@ -30,13 +25,12 @@ using Printf
 const HERE     = @__DIR__
 const BUILDDIR = joinpath(HERE, "build")
 
-# One page carrying both themes, switched at runtime rather than at build
-# time. Named index.html because that is what GitHub Pages serves from the
-# repository root.
-const OUTFILE = joinpath(HERE, "index.html")
+# Named index.html because that is what GitHub Pages serves from the
+# repository root, one level above this tools/ folder.
+const OUTFILE = joinpath(HERE, "..", "index.html")
 
 # ---------------------------------------------------------------------
-# Parameters -- identical to rose.jl
+# Parameters -- the original rose model's
 # ---------------------------------------------------------------------
 const PPR = 3.6      # petals per revolution
 const NR  = 30       # radial resolution
@@ -51,13 +45,11 @@ const PS  = 5 / 4    # petal edge sharpness
 # collapses onto its own axis as phi -> 0, so it has no egg-shaped "closed
 # bud" pose: below about outer = 0.35 it stops reading as a flower and turns
 # into a needle. 0.42 is the tightest pose that still shows furled petals.
-# (rose_animation.jl starts at [0.05, 0.60], but it is morphing ppr/pf/ps at
-# the same time -- a different flower each frame, not one flower opening.)
 const OL_BUD   = [0.05, 0.42]
 const OL_BLOOM = [0.22, 1.10]
 
 # ---------------------------------------------------------------------
-# Geometry -- rose.jl's expressions, unchanged
+# Geometry -- the original model's expressions, unchanged
 # ---------------------------------------------------------------------
 function compute_geometry(ol::Vector{Float64})
     pt      = (1 / PPR) * pi * 2
