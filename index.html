@@ -98,7 +98,7 @@
     transform-origin: 0 0; animation: sway 11s ease-in-out infinite;
   }
   #branch2 {
-    right: 0; bottom: 0; width: min(36vw, 460px); height: auto;
+    right: 0; bottom: 0; width: min(28vw, 360px); height: auto;
     transform-origin: 100% 100%; animation: sway 13s ease-in-out infinite reverse;
     transition: opacity 1200ms var(--ease);
   }
@@ -485,6 +485,12 @@
         <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G" result="d"/>
         <feGaussianBlur in="d" stdDeviation="1.4"/>
       </filter>
+      <!-- a gentler wash for the town's small shapes -->
+      <filter id="sc-wash-s" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04 0.06" numOctaves="2" seed="7" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.7" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feGaussianBlur in="d" stdDeviation=".45"/>
+      </filter>
     </defs>
     <rect width="1600" height="900" fill="url(#sc-sky)"/>
     <ellipse cx="830" cy="430" rx="520" ry="210" fill="url(#sc-sun)"/>
@@ -508,8 +514,10 @@
     <g id="sc-pagoda-site">
       <path filter="url(#sc-wash)" d="M1000 690 C1060 640 1170 628 1260 660 L1270 724 L990 724 Z" fill="#cdc8aa" opacity=".9"/>
       <g id="sc-pagoda" opacity=".78"></g>
+      <!-- the town below the hill, among trees -->
+      <g id="sc-town" filter="url(#sc-wash-s)" opacity=".85"></g>
     </g>
-    <rect class="mist b" x="-80" y="676" width="1760" height="90" fill="url(#sc-mist)" opacity=".8"/>
+    <rect class="mist b" x="-80" y="676" width="1760" height="90" fill="url(#sc-mist)" opacity=".55"/>
     <!-- the slope we are standing on -->
     <path filter="url(#sc-wash)" d="M0 842 C300 796 700 784 1000 812 C1250 832 1450 822 1600 800 L1640 960 L-40 960 Z" fill="#d8d2b3" opacity=".95"/>
     <g id="sc-grass" stroke="#bdb594" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".45"></g>
@@ -672,6 +680,57 @@
                        fill: cy < c[1] - 6 ? PINKS[rnd() < .5 ? 3 : 0] : PINKS[1 + ((rnd() * 2) | 0)], opacity: .92 }, crown);
       }
     });
+
+    // A small town at the pagoda's foot, among trees. It has its own seed (the
+    // old one is put back after) so the rest of the scenery draws unchanged.
+    var keepSeed = seed; seed = 7001;
+    var town = document.getElementById('sc-town');
+    var WALLS = ['#ece3d3', '#e8ddca', '#efe6d8'], TILES = ['#7f7b88', '#8e8590', '#7d7a86'];
+    var SAGES = ['#a9b38c', '#b7bf98', '#9fa983'];
+    function house(g, x, y, sc) {                                      // pale wall, darker roof, wider, eaves lifted
+      var w = (9 + rnd() * 9) * sc, h = w * .45, xl = x - w / 2 - 2.6 * sc, xr = x + w / 2 + 2.6 * sc, rh = (4.5 + rnd() * 3) * sc, rf = .08 + rnd() * .2, yt = y - h;
+      el('rect', { x: (x - w / 2).toFixed(1), y: yt.toFixed(1), width: w.toFixed(1), height: h.toFixed(1), fill: WALLS[(rnd() * 3) | 0] }, g);
+      el('path', { d: 'M' + xl.toFixed(1) + ' ' + (yt - 1.6 * sc).toFixed(1) + ' Q' + (xl + 2 * sc).toFixed(1) + ' ' + (yt + 1.6 * sc).toFixed(1) + ' ' + (xl + 4 * sc).toFixed(1) + ' ' + (yt + 1.6 * sc).toFixed(1) +
+                      ' L' + (xr - 4 * sc).toFixed(1) + ' ' + (yt + 1.6 * sc).toFixed(1) + ' Q' + (xr - 2 * sc).toFixed(1) + ' ' + (yt + 1.6 * sc).toFixed(1) + ' ' + xr.toFixed(1) + ' ' + (yt - 1.6 * sc).toFixed(1) +
+                      ' L' + (x + w * rf).toFixed(1) + ' ' + (yt - rh).toFixed(1) + ' L' + (x - w * rf).toFixed(1) + ' ' + (yt - rh).toFixed(1) + ' Z',
+                   fill: TILES[(rnd() * 3) | 0] }, g);
+      var q = rnd();                                                   // a dark doorway or a window slit, some warm-lit
+      if (q < .5) el('rect', { x: (x - w * .3).toFixed(1), y: (y - h * .62).toFixed(1), width: (1.6 * sc).toFixed(1), height: (h * .62).toFixed(1), fill: '#6f6a72', opacity: .8 }, g);
+      else if (q < .8) el('rect', { x: (x + w * .12).toFixed(1), y: (y - h * .7).toFixed(1), width: (2.4 * sc).toFixed(1), height: (1.3 * sc).toFixed(1), fill: rnd() < .5 ? '#e9c79a' : '#8a8590', opacity: .85 }, g);
+    }
+    function block(g, x, y, w, h, col) {                               // plain flat-roofed block, rows of windows
+      el('rect', { x: (x - w / 2).toFixed(1), y: (y - h).toFixed(1), width: w.toFixed(1), height: h.toFixed(1), fill: col }, g);
+      el('rect', { x: (x - w / 2 - .6).toFixed(1), y: (y - h - 1).toFixed(1), width: (w + 1.2).toFixed(1), height: 1.4, fill: '#c0bcbc' }, g);
+      var d = '';
+      for (var wy = y - h + 4; wy < y - 2; wy += 4) d += 'M' + (x - w / 2 + 1.5).toFixed(1) + ' ' + wy.toFixed(1) + ' H' + (x + w / 2 - 1.5).toFixed(1) + ' ';
+      el('path', { d: d, stroke: '#aeaaae', 'stroke-width': 1.4, 'stroke-dasharray': '1.6 1.4', fill: 'none' }, g);
+    }
+    function roundTree(g, x, y, s) {                                   // sage puffs on a short trunk
+      el('rect', { x: (x - .9 * s).toFixed(1), y: (y - 6 * s).toFixed(1), width: (1.8 * s).toFixed(1), height: 6 * s, fill: '#9c8478' }, g);
+      for (var n = 0; n < 3; n++)
+        el('circle', { cx: (x + (n - 1) * 3.2 * s + (rnd() - .5) * 2).toFixed(1), cy: (y - 9 * s - (n === 1 ? 3 * s : rnd() * 2)).toFixed(1), r: ((4.2 + rnd() * 2) * s).toFixed(1), fill: SAGES[(rnd() * 3) | 0] }, g);
+    }
+    // rows from far (high, small, pale) to near (low, larger, firmer); the
+    // town is densest left of the pagoda and thins out either side
+    [[678, .72, .75], [690, .9, .82], [702, 1.08, .9], [714, 1.2, .96], [726, 1.32, 1]].forEach(function (r, ri) {
+      var g = el('g', { opacity: r[2] }, town), sc = r[1], x = 930 + rnd() * 10;
+      while (x < 1300) {
+        var dist = Math.abs(x - 1085), keep = Math.max(.22, 1 - dist / 230), k = rnd();
+        if (rnd() > keep || (ri === 0 && x > 1085 && x < 1175)) { x += 8 + rnd() * 12; continue; }   // keep the pagoda's base clear
+        if (k < .64) { house(g, x, r[0], sc); x += (10 + rnd() * 5) * sc + 4; }
+        else if (k < .73 && ri > 0) { block(g, x, r[0], (8 + rnd() * 4) * sc, (13 + rnd() * 10) * sc, ri > 2 ? '#d6d3cf' : '#dfdcd7'); x += 12 * sc + 5; }
+        else if (k < .9 || x < 1030) { roundTree(g, x, r[0], sc * (.9 + rnd() * .5)); x += 7 * sc + 3; }
+        else { cherry(g, x, r[0], .3 + sc * .2, .85); x += 9 * sc + 3; }
+      }
+    });
+    // two tall, slim, hazy buildings at the far edges
+    [[944, 686], [1290, 700]].forEach(function (b) {
+      var tg = el('g', { opacity: .6 }, town); block(tg, b[0], b[1], 7, 32 + rnd() * 8, '#e2dfdc');
+    });
+    // trees along the town's edges
+    [[940, 712], [952, 730], [966, 742], [1292, 726], [1278, 742]].forEach(function (t) { roundTree(town, t[0], t[1], 1.2 + rnd() * .4); });
+    cherry(town, 1300, 736, .55, .85);
+    seed = keepSeed;
 
     // The landscape is cropped to fill the screen, so a tall phone sees only
     // its middle. Slide the pagoda's hill to the right-hand side of whatever
