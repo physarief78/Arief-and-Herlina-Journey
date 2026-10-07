@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>A Butterfly and a Rose</title>
+<style>
+  /* The handwriting font is bundled with the site (Latin subset, SIL Open
+     Font License -- see assets/fonts/OFL.txt), so the chapter needs no
+     outside service and writes its message the same way offline. */
+  @font-face {
+    font-family: "Great Vibes";
+    src: url("../assets/fonts/great-vibes-latin.woff2") format("woff2");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+</style>
+<style>
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#f3ede3;}
+  svg#scene{position:fixed;left:0;top:0;width:100vw;height:100vh;display:block;}
+  #again{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;
+    font:600 13px/1 "Segoe UI",system-ui,sans-serif;letter-spacing:.04em;color:#5b0d14;
+    background:rgba(243,237,227,.82);border:1px solid rgba(91,13,20,.45);border-radius:999px;padding:8px 16px;cursor:pointer;}
+  #again.show{display:block;}
+  #again:hover{background:rgba(255,250,240,.95);}
+  #fail{position:fixed;left:8px;top:8px;right:8px;font:12px monospace;color:#b00020;background:#fff;padding:6px;z-index:9;display:none;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+<svg id="scene" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+<defs id="bfDefs">
+  <filter id="bf_wobble" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="2" seed="3" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="bf_paint" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="8" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="4" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.35 0.2" numOctaves="3" seed="21" result="m"/>
+    <feColorMatrix in="m" type="matrix" values="0.5 0 0 0 0.55  0.5 0 0 0 0.55  0.5 0 0 0 0.55  0 0 0 0 1" result="mg"/>
+    <feBlend in="d" in2="mg" mode="multiply" result="b"/>
+    <feComposite in="b" in2="d" operator="in"/>
+  </filter>
+  <filter id="bf_soot" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.55 0.9" numOctaves="3" seed="5" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.27  0 0 0 0 0.23  0 0 0 0 0.20  0 0 0 -2.4 1.25"/>
+  </filter>
+  <filter id="bf_soot2" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02 0.05" numOctaves="3" seed="9" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.03  0 0 0 0 0.02  0 0 0 -2.6 1.3"/>
+  </filter>
+  <filter id="bf_soft"><feGaussianBlur stdDeviation="9"/></filter>
+  <filter id="bf_soft2"><feGaussianBlur stdDeviation="2.2"/></filter>
+  <radialGradient id="bf_baseGlow" gradientUnits="userSpaceOnUse" cx="525" cy="300" r="260">
+    <stop offset="0" stop-color="#5a4838" stop-opacity="0.75"/>
+    <stop offset="0.55" stop-color="#40342b" stop-opacity="0.35"/>
+    <stop offset="1" stop-color="#2a231e" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<defs id="sceneDefs">
+  <radialGradient id="sc_stain"><stop offset="0" stop-color="#b8782f" stop-opacity=".30"/><stop offset=".6" stop-color="#b8782f" stop-opacity=".10"/><stop offset="1" stop-color="#b8782f" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sc_mote"><stop offset="0" stop-color="#e2b45a" stop-opacity=".95"/><stop offset=".45" stop-color="#d9a441" stop-opacity=".5"/><stop offset="1" stop-color="#d9a441" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sc_bokeh"><stop offset="0" stop-color="#e9c27a" stop-opacity=".25"/><stop offset=".75" stop-color="#e0b060" stop-opacity=".4"/><stop offset="1" stop-color="#e0b060" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sc_petalA" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#f4a9b8" stop-opacity=".85"/><stop offset=".55" stop-color="#ec8aa0" stop-opacity=".55"/><stop offset="1" stop-color="#e57a92" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sc_petalB" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#c8283d" stop-opacity=".8"/><stop offset=".55" stop-color="#a8152b" stop-opacity=".5"/><stop offset="1" stop-color="#8a0f22" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sc_shadow"><stop offset="0" stop-color="#1d0408" stop-opacity=".9"/><stop offset=".55" stop-color="#2a0a0c" stop-opacity=".55"/><stop offset="1" stop-color="#2a0a0c" stop-opacity="0"/></radialGradient>
+  <radialGradient id="sc_vig" cx="50%" cy="45%" r="72%"><stop offset="58%" stop-color="#6b5440" stop-opacity="0"/><stop offset="100%" stop-color="#6b5440" stop-opacity=".18"/></radialGradient>
+  <pattern id="sc_grain" patternUnits="userSpaceOnUse" width="128" height="128"><image id="grainImg" x="0" y="0" width="128" height="128"/></pattern>
+</defs>
+<defs id="roseDefs"></defs>
+<g id="worldA">
+  <rect x="-2800" y="-2200" width="5600" height="5200" fill="#f3ede3"/>
+  <g id="stains"></g>
+  <rect x="-2800" y="-2200" width="5600" height="5200" fill="url(#sc_grain)"/>
+  <g id="roseWrap" transform="translate(-252 -130)"><g id="roseLive"></g><image id="roseImg" display="none" preserveAspectRatio="none"/></g>
+  <g id="txt"></g>
+</g>
+<g id="farL"></g>
+<g id="worldB">
+  <ellipse id="shadow" cx="0" cy="0" rx="10" ry="10" fill="url(#sc_shadow)" opacity="0"/>
+  <g id="bfly"></g>
+  <g id="nib" opacity="0"><path d="M0,0 L5,-9 L9,-7 Z" fill="#c9a24a" stroke="#3a2418" stroke-width=".6"/><path d="M7,-8 L30,-58" stroke="#2a1a12" stroke-width="3.2" stroke-linecap="round"/><path d="M7,-8 L30,-58" stroke="#7a3a2a" stroke-width="1" stroke-linecap="round" transform="translate(-.8 0)"/></g>
+</g>
+<g id="nearL"></g>
+<rect id="vig" x="0" y="0" width="100" height="100" fill="url(#sc_vig)" pointer-events="none"/>
+<text id="measure" x="0" y="0" visibility="hidden" xml:space="preserve"> </text>
+</svg>
+<button id="again" type="button">Play again</button>
+<div id="fail"></div>
+<script>
+(function(){
+"use strict";
+// ============================================================ EASY-TO-CHANGE CONSTANTS
+const MESSAGE_LINE_1 = "For Beautiful Erlin";
+const MESSAGE_LINE_2 = "— by Arief";
+const FONT_STACK = '"Great Vibes","Dancing Script","Segoe Script","Brush Script MT",cursive';
+const INK = "#5b0d14";            // deep red-brown ink
+const T_END = 20;                  // seconds; the final frame is held afterwards
+const WRITE1 = [13.1, 17.2];       // line 1 writing window (s)
+const WRITE2 = [17.6, 19.5];       // line 2 writing window (s)
+const S_REST = 0.24;               // butterfly scale on the flower (wingspan ~ 210 units, bloom ~ 250)
+const S_FLY  = S_REST * 1.65;              // butterfly scale when high above the page (closer to the camera)
+
+// ============================================================ ROSE (drawn into a given <g>)
+const Rose = (function(){
+const NS = 'http://www.w3.org/2000/svg';
+let root = null, defs = null;
+function E(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in (attrs || {})) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+  (parent || root).appendChild(e);
+  return e;
+}
+let uid = 0; const nid = p => 'rose_' + p + (++uid);
+let seed = 20261007;
+function rnd() { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+
+const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+const hex = a => '#' + a.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, t) => { const A = rgb(a), B = rgb(b); return hex(A.map((v, i) => v + (B[i] - v) * t)); };
+
+const R = { abyss:'#2a0005', deep:'#5a0009', shadow:'#780010', mid:'#c4001c', hi:'#e3192b', glow:'#ff4c3c', lip:'#ff6d57' };
+
+// smooth closed path through points; a point with 3rd element true is a sharp corner
+function sm(pts) {
+  const n = pts.length, k = 1 / 6;
+  const f = v => v.toFixed(1);
+  let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const a = pts[i], b = pts[(i + 1) % n], p = pts[(i - 1 + n) % n], q = pts[(i + 2) % n];
+    const c1 = a[2] ? a : [a[0] + (b[0] - p[0]) * k, a[1] + (b[1] - p[1]) * k];
+    const c2 = b[2] ? b : [b[0] - (q[0] - a[0]) * k, b[1] - (q[1] - a[1]) * k];
+    d += ` C${f(c1[0])},${f(c1[1])} ${f(c2[0])},${f(c2[1])} ${f(b[0])},${f(b[1])}`;
+  }
+  return d + 'Z';
+}
+const poly = pts => 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L') + ' Z';
+const line = pts => 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L');
+
+// a band hugging an open edge (upper) pushed toward `side` with sine taper
+function band(up, off, side) {
+  const n = up.length, lo = [];
+  for (let i = 0; i < n; i++) {
+    const w = Math.pow(Math.sin(Math.PI * i / (n - 1)), .8);
+    const sv = Array.isArray(side[0]) ? side[i] || side[side.length - 1] : side;
+    lo.push([up[i][0] + sv[0] * off * w, up[i][1] + sv[1] * off * w]);
+  }
+  const top = up.map((p, i) => i === 0 || i === n - 1 ? [p[0], p[1], true] : p);
+  return sm(top.concat(lo.reverse().slice(1, -1)));
+}
+
+function lg(x1, y1, x2, y2, stops) {
+  const id = nid('g');
+  const g = E('linearGradient', { id, gradientUnits: 'userSpaceOnUse', x1, y1, x2, y2 }, defs);
+  stops.forEach(([o, c, op]) => E('stop', { offset: o, 'stop-color': c, 'stop-opacity': op ?? 1 }, g));
+  return `url(#${id})`;
+}
+function clipOf(d) { const id = nid('c'); const cp = E('clipPath', { id }, defs); E('path', { d }, cp); return `url(#${id})`; }
+
+// ------------------------------------------------------------ rose petal
+function petal(o) {
+  const d = sm(o.pts), L = o.light ?? 1;
+  const g = E('g', {});
+  const [bx, by] = o.base, [rx, ry] = o.rim;
+  const dk = c => mix(c, '#2a0005', 1 - Math.min(1, L));
+  const fill = lg(bx, by, rx, ry, [[0, R.deep], [.3, dk(R.shadow)], [.62, dk(R.mid)], [1, mix(dk(R.hi), R.glow, Math.max(0, L - 1) * .8)]]);
+  E('path', { d, fill, stroke: R.abyss, 'stroke-width': .7, 'stroke-opacity': .55 }, g);
+  const dg = E('g', { 'clip-path': clipOf(d) }, g);
+  // vertical satin veining
+  const nV = o.veins ?? 16;
+  const ang = Math.atan2(ry - by, rx - bx), pa = ang + Math.PI / 2;
+  for (let i = 0; i < nV; i++) {
+    const u = (i / Math.max(1, nV - 1) - .5) * (o.spread ?? 90);
+    const x0 = bx + Math.cos(pa) * u * .35, y0 = by + Math.sin(pa) * u * .35;
+    const x1 = rx + Math.cos(pa) * u * .8 + (rnd() - .5) * 6, y1 = ry + Math.sin(pa) * u * .8 + (rnd() - .5) * 6;
+    const mx = (x0 + x1) / 2 + (rnd() - .5) * 8, my = (y0 + y1) / 2 + (rnd() - .5) * 8;
+    E('path', { d: `M${x0},${y0} Q${mx},${my} ${x1},${y1}`, fill: 'none',
+      stroke: i % 3 ? R.abyss : R.lip, 'stroke-width': i % 3 ? .8 : .6, 'stroke-opacity': i % 3 ? .2 : .13 }, dg);
+  }
+  (o.blobs || []).forEach(b => E('ellipse', { cx: b.x, cy: b.y, rx: b.rx, ry: b.ry, fill: b.c, opacity: b.o ?? .5,
+    filter: `url(#rose_${b.f || 'blur4'})`, transform: b.rot ? `rotate(${b.rot} ${b.x} ${b.y})` : null }, dg));
+  if (o.lip) {
+    const sd0 = o.lip.side || [0, 1], sd = Array.isArray(sd0[0]) ? sd0[Math.floor(sd0.length / 2)] : sd0;
+    const ld = band(o.lip.up, o.lip.off, sd0);
+    E('path', { d: ld, fill: 'none', stroke: R.abyss, 'stroke-width': 5, 'stroke-opacity': .5, filter: 'url(#rose_blur2)',
+      transform: `translate(${sd[0] * 3},${sd[1] * 3})`, 'clip-path': clipOf(d) }, g);
+    const mi = o.lip.up[Math.floor(o.lip.up.length / 2)];
+    const lf = lg(mi[0], mi[1] - 2, mi[0] + sd[0] * o.lip.off, mi[1] + sd[1] * o.lip.off * 1.2,
+      (o.lip.c0 ? [[0, o.lip.c0], [.25, R.glow], [.65, R.hi], [1, R.mid]] : [[0, R.lip], [.45, R.glow], [1, R.mid]]));
+    E('path', { d: ld, fill: lf, stroke: R.deep, 'stroke-width': .5, 'stroke-opacity': .5 }, g);
+    E('path', { d: line(o.lip.up), fill: 'none', stroke: '#ffb09a', 'stroke-width': .9, 'stroke-opacity': .65, 'stroke-linecap': 'round' }, g);
+  }
+  return g;
+}
+
+// ------------------------------------------------------------ leaves
+function leafletPts(x, y, angDeg, len, wid, teeth, bend) {
+  const a = angDeg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+  const T = (u, v) => [x + u * ca - v * sa, y + u * sa + v * ca];
+  const N = 70, up = [], lo = [], mid = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const w = wid * .5 * Math.pow(Math.sin(Math.PI * Math.pow(t, .78)), .8);
+    let tu = 1, tl = 1;
+    if (teeth && t > .08 && t < .97) {
+      const ramp = Math.min(1, (t - .08) * 6);
+      tu = 1 + .07 * (1 - ((t * teeth) % 1)) * ramp;
+      tl = 1 + .07 * (1 - ((t * teeth + .5) % 1)) * ramp;
+    }
+    const c = bend * len * t * t;
+    up.push(T(t * len, c - w * tu));
+    lo.push(T(t * len, c + w * tl));
+    mid.push(T(t * len, c));
+  }
+  return { up, lo, mid, T, len, wid, bend };
+}
+function leaflet(x, y, ang, len, wid, o = {}) {
+  const L = o.light ?? 1, bend = o.bend ?? .05;
+  const p = leafletPts(x, y, ang, len, wid, o.teeth ?? 16, bend);
+  const outline = poly(p.up.concat(p.lo.slice().reverse()));
+  const upper = poly(p.mid.concat(p.up.slice().reverse()));
+  const g = E('g', {});
+  const c0 = mix('#2f5e22', '#000000', Math.max(0, 1 - L) * .6), c1 = mix('#3f7a2c', '#ffffff', Math.max(0, L - 1) * .5);
+  const a = p.mid[0], b = p.mid[p.mid.length - 1];
+  const f = lg(a[0], a[1], b[0], b[1], [[0, mix(c0, '#1a3010', .3)], [.5, c0], [1, mix(c0, c1, .6)]]);
+  E('path', { d: outline, fill: f, stroke: '#1d3a12', 'stroke-width': .6, 'stroke-opacity': .7 }, g);
+  const dg = E('g', { 'clip-path': clipOf(outline) }, g);
+  E('path', { d: upper, fill: c1, opacity: .55 }, dg);
+  const sx = a[0] * .4 + b[0] * .6, sy = a[1] * .4 + b[1] * .6;
+  E('ellipse', { cx: sx, cy: sy, rx: len * .3, ry: wid * .14, fill: '#a9d070', opacity: .22 * L, filter: 'url(#rose_blur4)',
+    transform: `rotate(${ang} ${sx} ${sy})` }, dg);
+  E('path', { d: line(p.mid), fill: 'none', stroke: '#1a3a10', 'stroke-width': 3.2, 'stroke-opacity': .3, filter: 'url(#rose_blur2)' }, dg);
+  E('path', { d: line(p.mid), fill: 'none', stroke: '#b9d078', 'stroke-width': 1.5, 'stroke-opacity': .85, 'stroke-linecap': 'round' }, dg);
+  const nV = o.veins ?? 7;
+  for (let i = 1; i <= nV; i++) {
+    const t = .1 + .78 * i / (nV + 1);
+    for (const side of [-1, 1]) {
+      const m = p.T(t * len, bend * len * t * t);
+      const t2 = Math.min(.97, t + .2);
+      const w2 = wid * .5 * Math.pow(Math.sin(Math.PI * Math.pow(t2, .78)), .8) * .85;
+      const e = p.T(t2 * len, bend * len * t2 * t2 + side * w2);
+      const c = p.T((t + .1) * len, bend * len * t * t + side * w2 * .45);
+      E('path', { d: `M${m[0]},${m[1]} Q${c[0]},${c[1]} ${e[0]},${e[1]}`, fill: 'none', stroke: '#a8c46c', 'stroke-width': .75, 'stroke-opacity': .5 }, dg);
+    }
+  }
+  return p;
+}
+function rachis(d, w) { E('path', { d, fill: 'none', stroke: '#3d6a28', 'stroke-width': w || 2.2, 'stroke-linecap': 'round' }); }
+
+function sepal(x, y, ang, len, wid, bend) {
+  const p = leafletPts(x, y, ang, len, wid, 0, bend);
+  const o = poly(p.up.concat(p.lo.slice().reverse()));
+  const a = p.mid[0], b = p.mid[p.mid.length - 1];
+  E('path', { d: o, fill: lg(a[0], a[1], b[0], b[1], [[0, '#5f7f2c'], [.5, '#9dbb4c'], [1, '#c3d870']]), stroke: '#4c6a22', 'stroke-width': .5, 'stroke-opacity': .7 });
+  E('path', { d: line(p.mid), fill: 'none', stroke: '#dfeaa0', 'stroke-width': .8, 'stroke-opacity': .7 });
+}
+
+function draw(g, d) {
+root = g; defs = d; uid = 0; seed = 20261007;
+const bl = (id, sd, o, s) => { const fl = E('filter', { id: 'rose_' + id, x: o, y: o, width: s, height: s }, defs); E('feGaussianBlur', { stdDeviation: sd }, fl); };
+bl('blur2', 1.6, '-50%', '200%'); bl('blur4', 4, '-50%', '200%'); bl('blur9', 9, '-60%', '220%');
+// ---- leaves behind the stem
+rachis('M258,455 Q232,440 212,430', 2.4);
+leaflet(222, 436, -125, 100, 72, { light: .95, bend: .06 });
+leaflet(246, 447, 152, 100, 50, { light: .85, bend: -.07 });
+leaflet(214, 430, 188, 182, 74, { light: 1.05, bend: .05, veins: 9 });
+rachis('M262,418 Q272,405 280,392', 2);
+leaflet(268, 410, -40, 64, 38, { light: .9, bend: .08 });
+leaflet(250, 428, 12, 80, 26, { light: .8, bend: -.04 });
+rachis('M262,468 Q287,444 339,431', 2.6);
+leaflet(335, 432, 21, 192, 90, { light: 1.0, bend: .06, veins: 9 });
+rachis('M263,500 Q250,498 247,512', 2);
+leaflet(250, 514, 172, 128, 64, { light: 1.0, bend: -.05 });
+rachis('M262,505 Q270,508 277,514', 2);
+leaflet(276, 514, 5, 112, 72, { light: .95, bend: .05 });
+rachis('M256,556 Q228,566 197,584', 2.2);
+leaflet(197, 584, 188, 110, 42, { light: .9, bend: .05 });
+
+// ---- stem
+const STEM = 'M249,244 C249,330 251,420 253,520 C254,580 255,612 256,650 L268,650 C268,612 267,580 266,520 C264,420 263,330 262,244 Z';
+const stemFill = lg(0, 245, 0, 650, [[0, '#a0cc5c'], [.3, '#8cbc4f'], [.5, '#719a3a'], [.68, '#5d4a2a'], [1, '#4a2a20']]);
+E('path', { d: STEM, fill: stemFill, stroke: '#3d5a1e', 'stroke-width': .5, 'stroke-opacity': .5 });
+E('path', { d: 'M252,250 C252,340 254,430 256,520 C257,580 258,612 259,650', fill: 'none', stroke: '#2d4a14', 'stroke-width': 4, 'stroke-opacity': .25, transform: 'translate(5,0)', filter: 'url(#rose_blur2)' });
+E('path', { d: 'M252,250 C252,340 253,430 255,500', fill: 'none', stroke: '#d6eb9c', 'stroke-width': 1.8, 'stroke-opacity': .65, 'stroke-linecap': 'round' });
+
+// ---- flower head: open bloom seen almost face-on (rings of cupped petals around a spiral bud)
+const HC = [252, 130], GA = -14 * Math.PI / 180, GC = Math.cos(GA), GS = Math.sin(GA), GSX = 1.04, GSY = .9;
+const G = (x, y) => { const u = x * GSX, v = y * GSY; return [HC[0] + u * GC - v * GS, HC[1] + u * GS + v * GC]; };
+const gdeg = GA * 180 / Math.PI;
+const unit = (a, b) => { const dx = a[0] - b[0], dy = a[1] - b[1], l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; };
+const PINK = '#ff7a7a';
+
+// shadow cast by a petal onto what lies beneath, then the petal itself
+function shadowed(pts, opts, sh) {
+  E('path', { d: sm(pts), fill: R.abyss, opacity: sh ?? .5, filter: 'url(#rose_blur4)', transform: 'translate(1.5,3)' });
+  return petal(Object.assign({ pts }, opts));
+}
+
+function cupPetal(ring, a0, span) {
+  const [ox, oy] = ring.off;
+  const P = (r, a) => G(ox + Math.cos(a) * r, oy + Math.sin(a) * r);
+  const asym = a => 1 + ring.asym * Math.cos(a - 2.3);
+  const wph = rnd() * 6.28, wf = 1.6 + rnd() * 1.8, sc = 1 + (rnd() - .5) * .12;
+  const rim = [], M = 10;
+  for (let i = 0; i <= M; i++) {
+    const t = i / M, a = a0 + t * span;
+    const end = Math.pow(Math.sin(Math.PI * t), .28);
+    const r = ring.rOut * sc * asym(a) * (1 + ring.wave * Math.sin(wph + t * wf * Math.PI)) * (.74 + .26 * end);
+    rim.push(P(r, a));
+  }
+  const rOutM = ring.rOut * sc * .78, rIn = ring.rIn;
+  const sideA = P((rOutM + rIn) * .52, a0 - .07), sideB = P((rOutM + rIn) * .52, a0 + span + .07);
+  const inner = [P(rIn, a0 + span * .85), P(rIn * .85, a0 + span * .5), P(rIn, a0 + span * .15)];
+  const pts = rim.concat([sideB], inner, [sideA]);
+  const am = a0 + span * .5, ctr = G(ox, oy);
+  const up = rim.slice(1, M), sides = up.map(p => unit(ctr, p));
+  const wid = ring.rOut * span * .8;
+  const bp = P(rIn + (ring.rOut - rIn) * .3, am), rp = P(ring.rOut * .85, am);
+  const dkc = P(rIn + (ring.rOut - rIn) * .22, am), glc = P(ring.rOut * .8, am + (rnd() - .5) * span * .4);
+  const rot = am * 180 / Math.PI + 90 + gdeg;
+  const L = ring.light + (rnd() - .5) * .08;
+  const pg = shadowed(pts, {
+    base: P(rIn * .8, am), rim: P(ring.rOut, am), light: L, spread: wid, veins: 12,
+    lip: { up, off: ring.lipOff, side: sides, c0: PINK },
+    blobs: [{ x: dkc[0], y: dkc[1], rx: wid * .42, ry: (ring.rOut - rIn) * .2, c: R.abyss, o: .55, rot },
+            { x: glc[0], y: glc[1], rx: wid * .28, ry: (ring.rOut - rIn) * .16, c: R.glow, o: .42, rot, f: 'blur9' },
+            { x: rp[0], y: rp[1], rx: wid * .3, ry: 3, c: '#ffb0b0', o: .3, rot }]
+  }, ring.shadow);
+  // leading margin: dark crease with a faint lit edge beside it
+  const edge = [rim[0], rim[1], sideA, inner[2]];
+  E('path', { d: `M${edge[0]} Q${edge[2]} ${edge[3]}`, fill: 'none', stroke: R.abyss, 'stroke-width': 1.3, 'stroke-opacity': .55, 'stroke-linecap': 'round', filter: 'url(#rose_blur2)' }, pg);
+  E('path', { d: `M${edge[0][0]+1.2},${edge[0][1]+1} Q${edge[2][0]+1.2},${edge[2][1]+1} ${edge[3][0]+1.2},${edge[3][1]+1}`, fill: 'none', stroke: '#ff9a8a', 'stroke-width': .6, 'stroke-opacity': .35 }, pg);
+  return pg;
+}
+
+function cupRing(ring) {
+  const c = G(ring.off[0], ring.off[1]);
+  // dark cavity beneath the ring so the gaps between petals read deep crimson
+  E('ellipse', { cx: c[0], cy: c[1], rx: ring.rOut * .82 * GSX, ry: ring.rOut * .82 * GSY, transform: `rotate(${gdeg} ${c[0]} ${c[1]})`,
+    fill: lg(c[0], c[1] - ring.rOut, c[0], c[1] + ring.rOut, [[0, R.abyss], [1, R.deep]]) });
+  const n = ring.n, a00 = ring.a0;
+  for (let i = 0; i < n; i++) {
+    const step = Math.PI * 2 / n, ja = (rnd() - .5) * step * .22;
+    cupPetal(ring, a00 + i * step + ja, step * ring.ov * (1 + (rnd() - .5) * .16));
+  }
+}
+
+function bud() {
+  const [bx, by] = [15, -11];
+  const P = (r, a) => G(bx + Math.cos(a) * r, by + Math.sin(a) * r);
+  const c = G(bx, by);
+  E('ellipse', { cx: c[0], cy: c[1], rx: 9, ry: 8, transform: `rotate(${gdeg} ${c[0]} ${c[1]})`, fill: R.abyss });
+  const N = 6;
+  for (let k = N - 1; k >= 0; k--) {
+    const a0 = k * 1.75 + .5, span = 3.5 + (k % 2) * .5, rb = 6 + k * 4.4, ts = 14;
+    const out = [], inn = [];
+    for (let j = 0; j <= ts; j++) {
+      const t = j / ts, a = a0 + t * span, e = Math.pow(Math.sin(Math.PI * t), .7);
+      const ro = rb * (1 + .26 * t) + 1.0 * Math.sin(t * 7 + k);
+      const w = (3.6 + rb * .3) * e;
+      out.push(P(ro, a)); inn.push(P(ro - w, a));
+    }
+    const pts = out.concat(inn.slice(1, ts).reverse());
+    const am = a0 + span * .55, rr = rb * 1.12;
+    shadowed(pts, {
+      base: P(rb * .7, am), rim: P(rr, am), light: .92 + k * .03, spread: 8, veins: 3,
+      lip: { up: out.slice(1, ts), off: 3.2 + k * .25, side: out.slice(1, ts).map(p => unit(c, p)), c0: PINK }
+    }, .6);
+  }
+  E('path', { d: 'M' + P(2.5, 0).join(',') + ' Q' + P(5, 2).join(',') + ' ' + P(3.5, 3.6).join(','), fill: 'none', stroke: R.abyss, 'stroke-width': 1, 'stroke-opacity': .8, 'stroke-linecap': 'round' });
+}
+
+cupRing({ n: 6, rIn: 52, rOut: 118, off: [-4, 5], a0: .35, wave: .085, lipOff: 9, light: 1.18, asym: .1, ov: 1.42, shadow: .35 });
+cupRing({ n: 5, rIn: 38, rOut: 90, off: [5, 0], a0: 1.1, wave: .07, lipOff: 7.5, light: 1.04, asym: .06, ov: 1.38, shadow: .5 });
+cupRing({ n: 5, rIn: 26, rOut: 66, off: [10, -4], a0: 2.4, wave: .045, lipOff: 6, light: .97, asym: .05, ov: 1.4, shadow: .55 });
+cupRing({ n: 4, rIn: 14, rOut: 45, off: [13, -8], a0: 4.0, wave: .04, lipOff: 4.5, light: .9, asym: .04, ov: 1.45, shadow: .6 });
+bud();
+
+
+// ---- sepals bent down and out
+sepal(242, 244, 192, 84, 18, .16);
+sepal(266, 243, 28, 82, 16, -.2);
+sepal(256, 250, 62, 32, 9, -.1);
+sepal(248, 246, 122, 28, 8, .1);
+E('path', { d: 'M247,244 Q256,252 265,244 Q266,258 262,264 Q256,268 250,264 Q246,256 247,244 Z', fill: '#7da53c', stroke: '#4c6a22', 'stroke-width': .5 });
+}
+return { draw: draw };
+})();
+
+// ============================================================ BUTTERFLY (drawn into a given <g>)
+const Bfly = (function(){
+var NS = "http://www.w3.org/2000/svg";
+var D = null;
+function rng(seed){var a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function f(n){return Math.round(n*10)/10;}
+function lerp(a,b,t){return a+(b-a)*t;}
+function hex(c){return [parseInt(c.substr(1,2),16),parseInt(c.substr(3,2),16),parseInt(c.substr(5,2),16)];}
+function mix(c1,c2,t){var a=hex(c1),b=hex(c2);return "rgb("+Math.round(lerp(a[0],b[0],t))+","+Math.round(lerp(a[1],b[1],t))+","+Math.round(lerp(a[2],b[2],t))+")";}
+function ramp(stops,t){t=Math.max(0,Math.min(1,t));for(var i=0;i<stops.length-1;i++){if(t<=stops[i+1][0]){var u=(t-stops[i][0])/(stops[i+1][0]-stops[i][0]);return mix(stops[i][1],stops[i+1][1],u);}}return mix(stops[stops.length-1][1],stops[stops.length-1][1],0);}
+function bez(P,t){var u=1-t;return [u*u*u*P[0][0]+3*u*u*t*P[1][0]+3*u*t*t*P[2][0]+t*t*t*P[3][0],u*u*u*P[0][1]+3*u*u*t*P[1][1]+3*u*t*t*P[2][1]+t*t*t*P[3][1]];}
+function der(P,t){var u=1-t;return [3*u*u*(P[1][0]-P[0][0])+6*u*t*(P[2][0]-P[1][0])+3*t*t*(P[3][0]-P[2][0]),3*u*u*(P[1][1]-P[0][1])+6*u*t*(P[2][1]-P[1][1])+3*t*t*(P[3][1]-P[2][1])];}
+function norm(P,t){var d=der(P,t),l=Math.hypot(d[0],d[1])||1;return [-d[1]/l,d[0]/l];}
+// rounded polygon
+function rpoly(pts,r){var n=pts.length,s="";for(var i=0;i<n;i++){var p0=pts[(i+n-1)%n],p1=pts[i],p2=pts[(i+1)%n];
+ var d1=Math.hypot(p1[0]-p0[0],p1[1]-p0[1]),d2=Math.hypot(p2[0]-p1[0],p2[1]-p1[1]);var rr=Math.min(r,d1/2.2,d2/2.2);
+ var a=[p1[0]+(p0[0]-p1[0])*rr/d1,p1[1]+(p0[1]-p1[1])*rr/d1],b=[p1[0]+(p2[0]-p1[0])*rr/d2,p1[1]+(p2[1]-p1[1])*rr/d2];
+ s+=(i?"L":"M")+f(a[0])+","+f(a[1])+"Q"+f(p1[0])+","+f(p1[1])+" "+f(b[0])+","+f(b[1]);}
+ return s+"Z";}
+function el(name,attrs,parent){var e=document.createElementNS(NS,name);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+var FW_BAND=[[572,336],[700,330],[825,284],[935,226]];
+var HW_BAND=[[612,370],[596,435],[572,505],[540,585]];
+
+function foreOutline(R,j){
+ function J(){return (R()-0.5)*j;}
+ var s="M512,264";
+ s+="C"+f(572+J())+","+f(204+J())+" "+f(660+J())+","+f(158+J())+" "+f(780)+","+f(148+J());
+ s+="C"+f(880+J())+","+f(142+J())+" "+f(962+J())+","+f(178+J())+" "+f(996)+","+f(236+J());
+ s+="C"+f(950+J())+","+f(258+J())+" "+f(880+J())+","+f(334+J())+" "+f(786)+","+f(376+J());
+ s+="C"+f(744)+","+f(392+J())+" "+f(718)+","+f(400)+" "+f(700)+","+f(398+J());
+ s+="C"+f(640)+","+f(372)+" "+f(570)+","+f(348)+" "+f(520)+","+f(332);
+ return s+"Z";
+}
+
+function hindOutline(R,j){
+ function J(){return (R()-0.5)*j;}
+ var s="M516,330C"+f(600+J())+",346 "+f(680)+",360 "+f(712)+",388";
+ // outer margin: scalloped
+ var M=[[712,388],[782+J(),455],[752+J(),600],[640+J(),706]];
+ var N=8,pts=[];
+ for(var i=0;i<=N;i++){var t=i/N;var pp=bez(M,t);if(i>0&&i<N){var dx=560-pp[0],dy=450-pp[1],dl=Math.hypot(dx,dy);pp=[pp[0]+dx/dl*7,pp[1]+dy/dl*7];}pts.push({p:pp,n:norm(M,t)});}
+ var lobes=[];
+ for(var i=0;i<N;i++){
+  var a=pts[i].p,b=pts[i+1].p,nm=[(pts[i].n[0]+pts[i+1].n[0])/2,(pts[i].n[1]+pts[i+1].n[1])/2];
+  // normal points to... ensure outward = +x/+y side
+  var sgn=(nm[0]+nm[1]*0.2)>0?1:-1; if(nm[0]*sgn<0)sgn=-sgn;
+  var depth=20+R()*8;
+  var c=[(a[0]+b[0])/2+nm[0]*sgn*depth,(a[1]+b[1])/2+nm[1]*sgn*depth];
+  lobes.push({a:a,b:b,c:c,n:[nm[0]*sgn,nm[1]*sgn]});
+  // slight notch before each point
+  if(i===0)s+="L"+f(a[0])+","+f(a[1]);
+  s+="Q"+f(c[0])+","+f(c[1])+" "+f(b[0])+","+f(b[1]);
+ }
+ // lower tip rounded, then anal/inner margin back
+ s+="C"+f(602)+","+f(690)+" "+f(560+J())+","+f(640)+" "+f(534)+","+f(580);
+ s+="C"+f(516)+","+f(520)+" "+f(508)+","+f(440)+" "+f(512)+","+f(372)+"Z";
+ return {d:s,lobes:lobes,pts:pts};
+}
+
+function bandCells(P,bounds,w0,w1,R,stops,gap,slant,id){
+ var g="",N=bounds.length-1;
+ for(var i=0;i<N;i++){
+  var ta=bounds[i]+gap,tb=bounds[i+1]-gap,tm=(ta+tb)/2,wm=lerp(w0,w1,Math.pow(Math.max(0,tm),1.1));
+  var wa=lerp(w0,w1,Math.pow(Math.max(0,ta),1.1)),wb=lerp(w0,w1,Math.pow(Math.max(0,tb),1.1));
+  var A=bez(P,ta),B=bez(P,tb),nA=norm(P,ta),nB=norm(P,tb);
+  var sl=slant*(0.8+R()*0.4);
+  var pts=[[A[0]+nA[0]*wa/2,A[1]+nA[1]*wa/2],[B[0]+nB[0]*wb/2,B[1]+nB[1]*wb/2],[B[0]-nB[0]*wb/2,B[1]-nB[1]*wb/2],[A[0]-nA[0]*wa/2,A[1]-nA[1]*wa/2]];
+  // slant: shift one side along the tangent
+  var dA=der(P,ta),dB=der(P,tb),lA=Math.hypot(dA[0],dA[1]),lB=Math.hypot(dB[0],dB[1]);
+  pts[0][0]+=dA[0]/lA*sl*wa;pts[0][1]+=dA[1]/lA*sl*wa;pts[3][0]-=dA[0]/lA*sl*wa;pts[3][1]-=dA[1]/lA*sl*wa;
+  pts[1][0]+=dB[0]/lB*sl*wb;pts[1][1]+=dB[1]/lB*sl*wb;pts[2][0]-=dB[0]/lB*sl*wb;pts[2][1]-=dB[1]/lB*sl*wb;
+  for(var k=0;k<4;k++){pts[k][0]+=(R()-0.5)*2.2;pts[k][1]+=(R()-0.5)*2.2;}
+  var col=ramp(stops,tm+(R()-0.5)*0.06);
+  var rim=mix("#1f4a45","#3f5a22",Math.max(0,Math.min(1,tm)));
+  var d=rpoly(pts,Math.max(2.2,wm*0.16));
+  g+='<path d="'+d+'" fill="'+col+'" stroke="'+rim+'" stroke-opacity="0.55" stroke-width="1.6"/>';
+  // paler centre wash (uneven)
+  var cx=(pts[0][0]+pts[1][0]+pts[2][0]+pts[3][0])/4+(R()-0.5)*4,cy=(pts[0][1]+pts[1][1]+pts[2][1]+pts[3][1])/4+(R()-0.5)*4;
+  g+='<path d="'+d+'" fill="'+mix("#ffffff",col.indexOf("rgb")===0?"#9ad0b8":"#9ad0b8",0.0)+'" opacity="0.0"/>';
+  g+='<ellipse cx="'+f(cx)+'" cy="'+f(cy)+'" rx="'+f(Math.hypot(B[0]-A[0],B[1]-A[1])*0.28)+'" ry="'+f(wm*0.22)+'" transform="rotate('+f(Math.atan2(dA[1],dA[0])*57.3)+' '+f(cx)+' '+f(cy)+')" fill="#e6f3dc" opacity="'+f(0.05+R()*0.1)+'"/>';
+  // dark vein through cell
+  g+='<path d="M'+f(A[0]+(R()-0.5)*3)+','+f(A[1]+(R()-0.5)*3)+'L'+f(B[0])+','+f(B[1])+'" stroke="#1d2a24" stroke-opacity="0.35" stroke-width="0.8" fill="none"/>';
+ }
+ return g;
+}
+
+function buildSide(seed,tag,opt){
+ var R=rng(seed);
+ var fo=foreOutline(R,opt.j), ho=hindOutline(R,opt.j);
+ var out={hind:"",fore:""};
+ var defs=D;
+ var cpF=el("clipPath",{id:"bf_cf"+tag},defs);el("path",{d:fo},cpF);
+ var cpH=el("clipPath",{id:"bf_ch"+tag},defs);el("path",{d:ho.d},cpH);
+
+ function wingBody(outline,cid,base,veinsFrom,targets,hatchN){
+  var s='<path d="'+outline+'" fill="#2b241f"/>';
+  s+='<g clip-path="url(#'+cid+')">';
+  s+='<rect x="0" y="0" width="1000" height="800" fill="#2a231e" opacity="0"/>';
+  s+='<rect x="0" y="0" width="1000" height="800" filter="url(#bf_soot)" opacity="0.85"/>';
+  s+='<rect x="0" y="0" width="1000" height="800" filter="url(#bf_soot2)" opacity="0.55"/>';
+  s+='<rect x="0" y="0" width="1000" height="800" fill="url(#bf_baseGlow)"/>';
+  // hatching: radial fine lines
+  var h="";
+  for(var i=0;i<hatchN;i++){
+   var t=targets[Math.floor(R()*targets.length)];
+   var u=0.12+R()*0.35,v=u+0.08+R()*0.35;
+   var x0=lerp(veinsFrom[0],t[0],u)+(R()-0.5)*8,y0=lerp(veinsFrom[1],t[1],u)+(R()-0.5)*8;
+   var x1=lerp(veinsFrom[0],t[0],v)+(R()-0.5)*6,y1=lerp(veinsFrom[1],t[1],v)+(R()-0.5)*6;
+   var light=R()<0.45;
+   h+='<path d="M'+f(x0)+','+f(y0)+'L'+f(x1)+','+f(y1)+'" stroke="'+(light?'#6b5846':'#0d0907')+'" stroke-opacity="'+f(light?0.22+R()*0.2:0.35+R()*0.3)+'" stroke-width="'+f(0.4+R()*0.5)+'"/>';
+  }
+  s+='<g fill="none">'+h+'</g>';
+  return s;
+ }
+
+ // ---- forewing ----
+ var fTargets=[];
+ for(var i=0;i<=22;i++){var t=i/22;fTargets.push(t<0.5?bez([[982,220],[946,262],[868,326],[776,362]],t*2):bez([[776,362],[738,378],[706,386],[690,384]],(t-0.5)*2));}
+ for(var i=0;i<=8;i++){fTargets.push(bez([[512,264],[560,214],[640,172],[760,158]],i/8));fTargets.push(bez([[760,158],[850,150],[932,172],[982,220]],i/8));}
+ var s=wingBody(fo,"bf_cf"+tag,0,[520,300],fTargets,520);
+ // veins
+ var vs="";
+ var ends=[];
+ for(var i=0;i<=17;i++){var t=i/17;ends.push(bez([[982,220],[946,262],[868,326],[776,362]],Math.min(1,t*1.8)));}
+ for(var i=0;i<12;i++){var t=i/11;var e=i<9?bez([[760,158],[850,150],[932,172],[982,220]],0.06+t*1.0*0.94):bez([[776,362],[738,378],[706,386],[690,384]],(i-9)/3);
+   var mx=lerp(525,e[0],0.5)+(R()-0.5)*10,my=lerp(300,e[1],0.5)-(i<9?18*(1-t):-6)+(R()-0.5)*8;
+   vs+='<path d="M'+f(lerp(525,e[0],0.28))+','+f(lerp(300,e[1],0.28))+'Q'+f(mx)+','+f(my)+' '+f(e[0])+','+f(e[1])+'" stroke="#0b0807" stroke-width="'+f(1.2-(i%3)*0.25)+'" stroke-opacity="0.7" fill="none"/>';
+   vs+='<path d="M'+f(lerp(525,e[0],0.28))+','+f(lerp(303,e[1],0.28)+2)+'Q'+f(mx)+','+f(my+3)+' '+f(e[0])+','+f(e[1]+2)+'" stroke="#6d5a47" stroke-opacity="0.25" stroke-width="0.6" fill="none"/>';}
+ // costal vein & a cross vein arc (discal cell edge)
+ vs+='<path d="M520,282Q640,215 770,196Q870,186 962,214" stroke="#0b0807" stroke-width="1.6" stroke-opacity="0.8" fill="none"/>';
+ vs+='<path d="M700,215Q735,250 722,300" stroke="#0b0807" stroke-width="1.2" stroke-opacity="0.7" fill="none"/>';
+ s+=vs;
+ // basal hair-scales and dusting
+ var hairs="";
+ for(var i=0;i<150;i++){var a=(R()*3.1-1.2),rr=15+R()*90,x=525+Math.cos(a)*rr,y=310+Math.sin(a)*rr*0.9;
+  hairs+='<path d="M'+f(x)+','+f(y)+'l'+f(Math.cos(a)*6)+','+f(Math.sin(a)*6)+'" stroke="#8a7a62" stroke-opacity="'+f(0.15+R()*0.25)+'" stroke-width="0.7"/>';}
+ s+=hairs;
+ s+='<ellipse cx="930" cy="222" rx="60" ry="26" transform="rotate(-30 930 222)" fill="#6d5e4e" opacity="0.18" filter="url(#bf_soft)"/>';
+ // stipple along margins
+ var st="";
+ for(var i=0;i<260;i++){var q=fTargets[Math.floor(R()*fTargets.length)],k=0.02+R()*0.14;
+  st+='<circle cx="'+f(lerp(q[0],600,k*0.5)+(R()-0.5)*6)+'" cy="'+f(lerp(q[1],300,k*0.5)+(R()-0.5)*6)+'" r="'+f(0.4+R()*0.6)+'" fill="'+(R()<0.5?"#a99a82":"#0a0706")+'" opacity="'+f(0.2+R()*0.35)+'"/>';}
+ s+=st; // light dusting along the inner margin
+ s+='<path d="M520,334Q600,360 690,384L690,360Q600,336 520,308Z" fill="#6a5440" opacity="0.28" filter="url(#bf_soft2)"/>';
+ // cells (with pigment filter)
+ var stopsF=[[0,"#5fb4b0"],[0.22,"#78c6bd"],[0.45,"#8fcf9c"],[0.7,"#a2cc72"],[1,"#b4c75c"]];
+ var bF=[0,0.115,0.235,0.35,0.46,0.565,0.665,0.76,0.845,0.915,0.965,1.0];
+ var cellsF=bandCells(FW_BAND,bF,opt.w0,12,R,stopsF,0.008,0.08,"f");
+ // white patch
+ var wp=bandCells(FW_BAND,[-0.125,-0.012],60,58,R,[[0,"#e8ece2"],[1,"#d3e4df"]],0.0,0.25,"w");
+ s+='<g filter="url(#bf_paint)">'+cellsF+wp+'</g>';
+ s+='<path d="'+fo+'" fill="none" stroke="#8a7864" stroke-opacity="0.28" stroke-width="9" filter="url(#bf_soft2)"/></g>';
+ s+='<path d="'+fo+'" fill="none" stroke="#0a0706" stroke-width="2.2" stroke-linejoin="round" filter="url(#bf_wobble)"/>';
+ s+='<path d="'+fo+'" fill="none" stroke="#7a6652" stroke-opacity="0.35" stroke-width="0.7" transform="translate(-1.5,1.5)" clip-path="url(#bf_cf'+tag+')"/>';
+ out.fore=s;
+
+ // ---- hindwing ----
+ var hT=[];
+ for(var i=0;i<ho.lobes.length;i++){hT.push(ho.lobes[i].a);hT.push(ho.lobes[i].c);}
+ hT.push(ho.lobes[ho.lobes.length-1].b);
+ var s2=wingBody(ho.d,"bf_ch"+tag,0,[520,350],hT,600);
+ var hv="";
+ for(var i=0;i<hT.length;i+=1){var e=hT[i];
+  var mx=lerp(520,e[0],0.5)+(R()-0.5)*8,my=lerp(350,e[1],0.5)+(R()-0.5)*8;
+  if(i%2===0)hv+='<path d="M'+f(lerp(522,e[0],0.25))+','+f(lerp(352,e[1],0.25))+'Q'+f(mx)+','+f(my)+' '+f(e[0])+','+f(e[1])+'" stroke="#0b0807" stroke-width="1.3" stroke-opacity="0.9" fill="none"/>';}
+ hv+='<path d="M610,372Q650,430 640,520" stroke="#0b0807" stroke-width="1" stroke-opacity="0.7" fill="none"/>';
+ s2+=hv;
+ // brown anal shading
+ s2+='<ellipse cx="545" cy="500" rx="26" ry="62" fill="#8a5f38" opacity="0.55" filter="url(#bf_soft)"/>';
+ s2+='<ellipse cx="530" cy="420" rx="22" ry="40" fill="#5a4430" opacity="0.4" filter="url(#bf_soft)"/>';
+ var stopsH=[[0,"#6ab9b2"],[0.45,"#6fbcb4"],[0.8,"#78c0ae"],[1,"#8cc7ab"]];
+ var cellsH=bandCells(HW_BAND,[0,0.21,0.43,0.64,0.83,1.0],opt.hw,36,R,stopsH,0.009,0.2,"h");
+ // lunules
+ var lun="";
+ var pick=[1,3,5,6];
+ for(var q=0;q<pick.length;q++){var L=ho.lobes[pick[q]];
+  var a=L.a,b=L.b,n=L.n,off=25,sp=0.12;
+  var A=[lerp(a[0],b[0],sp)-n[0]*off,lerp(a[1],b[1],sp)-n[1]*off],B=[lerp(a[0],b[0],1-sp)-n[0]*off,lerp(a[1],b[1],1-sp)-n[1]*off];
+  var C1=[(A[0]+B[0])/2+n[0]*16,(A[1]+B[1])/2+n[1]*16],C2=[(A[0]+B[0])/2+n[0]*-2.5,(A[1]+B[1])/2+n[1]*-2.5];
+  lun+='<path d="M'+f(A[0])+','+f(A[1])+'Q'+f(C1[0])+','+f(C1[1])+' '+f(B[0])+','+f(B[1])+'Q'+f(C2[0])+','+f(C2[1])+' '+f(A[0])+','+f(A[1])+'Z" fill="'+(q%2?"#79c3b6":"#6fbcb6")+'" stroke="#2c5a54" stroke-opacity="0.5" stroke-width="0.7"/>';}
+ s2+='<g filter="url(#bf_paint)">'+cellsH+lun+'</g>';
+ s2+='<path d="'+ho.d+'" fill="none" stroke="#8a7864" stroke-opacity="0.28" stroke-width="9" filter="url(#bf_soft2)"/></g>';
+ s2+='<path d="'+ho.d+'" fill="none" stroke="#0a0706" stroke-width="2.2" stroke-linejoin="round" filter="url(#bf_wobble)"/>';
+ out.hind=s2;
+ return out;
+}
+
+function bodyMarkup(){
+ var R=rng(555);
+ var b="";
+ // legs (thin)
+ var legs=[[[492,268],[455,300],[440,345]],[[508,268],[540,300],[548,350]],[[494,282],[462,330],[470,380]],[[506,282],[538,330],[534,376]]];
+ legs.forEach(function(l){b+='<path d="M'+l[0]+'Q'+l[1]+' '+l[2]+'" stroke="#1a1410" stroke-width="1.6" fill="none" stroke-linecap="round"/>';});
+ // abdomen
+ var ab="M490,300C484,350 489,430 498,520C500,527 502,527 504,520C513,430 518,350 512,300Z";
+ b+='<path d="'+ab+'" fill="#322c27" stroke="#0d0907" stroke-width="1.6"/>';
+ b+='<path d="M493,305C490,370 494,440 499,505" stroke="#7d8277" stroke-opacity="0.45" stroke-width="2.4" fill="none"/>';
+ for(var i=0;i<18;i++){var y=312+i*11.6,w=lerp(11,2.4,i/18);
+  b+='<path d="M'+f(500-w)+','+f(y)+'Q500,'+f(y+3.5)+' '+f(500+w)+','+f(y)+'" stroke="#0c0806" stroke-width="1.1" fill="none"/>';
+  b+='<path d="M'+f(500-w+1)+','+f(y+3)+'Q500,'+f(y+6)+' '+f(500+w-1)+','+f(y+3)+'" stroke="#8a8f80" stroke-opacity="0.35" stroke-width="0.7" fill="none"/>';}
+ // thorax
+ b+='<ellipse cx="500" cy="262" rx="23" ry="44" fill="#2a2420" stroke="#0d0907" stroke-width="1.5"/>';
+ for(var i=0;i<170;i++){var a=R()*6.283,rr=Math.sqrt(R());var x=500+Math.cos(a)*rr*21,y=262+Math.sin(a)*rr*41;var ang=-1.57+(R()-0.5)*1.6+(x-500)*0.02;
+  b+='<path d="M'+f(x)+','+f(y)+'l'+f(Math.cos(ang)*5)+','+f(Math.sin(ang)*5)+'" stroke="'+(R()<0.5?'#8b9285':'#55574d')+'" stroke-opacity="'+f(0.35+R()*0.4)+'" stroke-width="0.8"/>';}
+ // head
+ b+='<ellipse cx="500" cy="212" rx="16" ry="14" fill="#2a231f" stroke="#0d0907" stroke-width="1.4"/>';
+ for(var i=0;i<30;i++){var a=R()*6.283,rr=Math.sqrt(R());b+='<path d="M'+f(500+Math.cos(a)*rr*13)+','+f(214+Math.sin(a)*rr*11)+'l'+f((R()-0.5)*4)+',-4" stroke="#7f8579" stroke-opacity="0.5" stroke-width="0.7"/>';}
+ [[490,206],[511,206]].forEach(function(p){
+  b+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="6.5" fill="#a9552f" stroke="#2a130a" stroke-width="1"/><circle cx="'+(p[0]+1)+'" cy="'+(p[1]+1)+'" r="3.5" fill="#6e2f17" opacity="0.7"/><circle cx="'+(p[0]-2)+'" cy="'+(p[1]-2)+'" r="1.6" fill="#f0c9a0" opacity="0.8"/>';});
+ // antennae
+ b+='<path d="M493,201C482,160 462,110 438,52" stroke="#1a1410" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+ b+='<path d="M507,201C525,170 560,120 598,82" stroke="#1a1410" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+ b+='<ellipse cx="437" cy="50" rx="2.6" ry="8" transform="rotate(-24 437 50)" fill="#1a1410"/>';
+ b+='<ellipse cx="601" cy="79" rx="2.6" ry="8" transform="rotate(42 601 79)" fill="#1a1410"/>';
+ return b;
+}
+
+function draw(g, defsEl){
+ D = defsEl;
+ var right = buildSide(1234,"r",{j:6,w0:74,hw:62});
+ var left  = buildSide(98765,"l",{j:9,w0:70,hw:58});
+ var Ltr = "translate(1000,0) scale(-1,1) rotate(-4.5 520 300) translate(2,-5)";
+ var Rtr = "rotate(0.8 520 300)";
+ function wing(tr, inner){
+  var flap = el("g",{},g);
+  var live = el("g",{transform:tr},flap);
+  live.innerHTML = inner;
+  return {flap:flap, live:live, tr:tr, inner:inner};
+ }
+ var L = wing(Ltr, left.hind + left.fore);
+ var R = wing(Rtr, right.hind + right.fore);
+ var body = el("g",{},g);
+ body.innerHTML = bodyMarkup();
+ // standalone SVG text of one wing (for one-off rasterising into a sprite)
+ function spriteSVG(w, vb, scale){
+  var defsStr = new XMLSerializer().serializeToString(D);
+  var W = vb[2], H = vb[3];
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+vb.join(' ')+'" width="'+Math.round(W*scale)+'" height="'+Math.round(H*scale)+'">'+defsStr+'<g transform="'+w.tr+'">'+w.inner+'</g></svg>';
+ }
+ return {L:L, R:R, body:body, spriteSVG:spriteSVG, vbL:[-12,110,524,650], vbR:[488,110,524,650]};
+}
+return { draw: draw };
+})();
+
+// ============================================================ SCENE
+const SVGNS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
+const lerp = (a,b,t) => a + (b - a) * t;
+const ss = x => { x = clamp(x,0,1); return x*x*(3-2*x); };
+const easeIO = x => { x = clamp(x,0,1); return x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; };
+function mk(name, attrs, parent){ const e = document.createElementNS(SVGNS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function prng(seed){ let a = seed >>> 0; return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+const qs = new URLSearchParams(location.search), hs = new URLSearchParams(location.hash.replace(/^#/, ''));
+const param = n => qs.has(n) ? qs.get(n) : (hs.has(n) ? hs.get(n) : null);
+let DEBUG_T = null;
+if (param('t') !== null && param('t') !== '' && isFinite(parseFloat(param('t')))) DEBUG_T = parseFloat(param('t')) / 1000;
+else if (qs.has('final') || hs.has('final')) DEBUG_T = T_END;
+const DEBUG = DEBUG_T !== null;
+
+const svg = $('scene'), worldA = $('worldA'), worldB = $('worldB'), farL = $('farL'), nearL = $('nearL');
+const roseLive = $('roseLive'), roseImg = $('roseImg'), txtG = $('txt'), bflyG = $('bfly'), shadowEl = $('shadow'), nibEl = $('nib');
+const againBtn = $('again'), vigEl = $('vig');
+let W = innerWidth, H = innerHeight;
+
+function fail(msg){ const d = $('fail'); d.style.display = 'block'; d.textContent += msg + '\n'; console.error(msg); }
+
+// ------------------------------------------------------------ world constants
+const ROSE_BB = { x: 10, y: -12, w: 540, h: 675 };            // rose-local coordinates that contain the whole drawing
+const LAND = [8, -16];                                        // landing spot near the bloom centre (world; bloom centre = origin)
+const REST_ANGLE = -24;                                       // deg, head pointing up and a little to the left
+const PATH_PTS = [[-600,400],[-470,320],[-350,430],[-205,350],[-55,390],[85,372],[205,330],[300,215],[305,70],[225,-100],[120,-135],[LAND[0],LAND[1]]];
+const ROSE_BOX = { x0: -222, x1: 278, y0: -130, y1: 520 };    // rose extent in world
+
+// ------------------------------------------------------------ build: paper
+function buildPaper(){
+  // fine grain tile (generated at runtime, no external image)
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const ctx = c.getContext('2d'), im = ctx.createImageData(512, 512), R = prng(5);
+  for (let i = 0; i < 512*512; i++){ const v = R(); im.data[i*4] = 112; im.data[i*4+1] = 90; im.data[i*4+2] = 64; im.data[i*4+3] = v*v*v*85; }
+  ctx.putImageData(im, 0, 0);
+  $('grainImg').setAttribute('href', c.toDataURL('image/png'));
+  const g = $('stains'), r = prng(42), f1 = n => Math.round(n*10)/10;
+  for (let i = 0; i < 130; i++){
+    const x = -1700 + r()*3300, y = -1300 + r()*3000, rr = 50 + r()*260;
+    mk('circle', { cx: f1(x), cy: f1(y), r: f1(rr), fill: 'url(#sc_stain)', opacity: f1(.25 + r()*.75) }, g);
+  }
+  for (let i = 0; i < 520; i++){
+    mk('circle', { cx: f1(-1700 + r()*3300), cy: f1(-1300 + r()*3000), r: f1(.5 + r()*1.5), fill: '#8a5a28', opacity: f1(.12 + r()*.3) }, g);
+  }
+  for (let i = 0; i < 260; i++){                                        // short fibres
+    const x = -1700 + r()*3300, y = -1300 + r()*3000, a = r()*6.283, l = 10 + r()*30, b = (r()-.5)*14;
+    mk('path', { d: 'M'+f1(x)+','+f1(y)+' q'+f1(Math.cos(a)*l/2 - Math.sin(a)*b)+','+f1(Math.sin(a)*l/2 + Math.cos(a)*b)+' '+f1(Math.cos(a)*l)+','+f1(Math.sin(a)*l),
+      fill: 'none', stroke: r() < .5 ? '#a58c6a' : '#c9b48e', 'stroke-width': f1(.5 + r()*.7), 'stroke-opacity': f1(.18 + r()*.25) }, g);
+  }
+}
+
+// ------------------------------------------------------------ build: rose
+let roseSVGString = '';
+function buildRose(){
+  const tmp = document.createElementNS(SVGNS, 'svg');
+  const d = mk('defs', {}, tmp), g = mk('g', {}, tmp);
+  Rose.draw(g, d);
+  tmp.setAttribute('xmlns', SVGNS);
+  tmp.setAttribute('viewBox', [ROSE_BB.x, ROSE_BB.y, ROSE_BB.w, ROSE_BB.h].join(' '));
+  roseSVGString = new XMLSerializer().serializeToString(tmp);     // serialised copy (for the one-off raster) ...
+  while (d.firstChild) $('roseDefs').appendChild(d.firstChild);   // ... and the live copy goes into the page
+  while (g.firstChild) roseLive.appendChild(g.firstChild);
+}
+
+// ------------------------------------------------------------ build: butterfly
+let BF = null;
+function buildButterfly(){ BF = Bfly.draw(bflyG, $('bfDefs')); }
+
+function svgToCanvasURL(str, wpx, hpx){
+  return new Promise(function(resolve, reject){
+    const doc = new DOMParser().parseFromString(str, 'image/svg+xml');
+    if (doc.getElementsByTagName('parsererror').length) { reject(new Error('sprite svg not well-formed')); return; }
+    const url = URL.createObjectURL(new Blob([str], { type: 'image/svg+xml' }));
+    const im = new Image();
+    im.onload = function(){
+      try {
+        const c = document.createElement('canvas'); c.width = wpx; c.height = hpx;
+        c.getContext('2d').drawImage(im, 0, 0, wpx, hpx);
+        c.toBlob(function(b){ if (!b) { reject(new Error('toBlob failed')); return; } URL.revokeObjectURL(url); resolve(URL.createObjectURL(b)); }, 'image/png');
+      } catch (e) { reject(e); }
+    };
+    im.onerror = function(){ reject(new Error('svg image failed to load')); };
+    im.src = url;
+  });
+}
+function preload(u){ return new Promise(function(res){ const t = new Image(); t.onload = t.onerror = res; t.src = u; }); }
+
+let rasterRoseDone = Promise.resolve(), rasterWingsDone = Promise.resolve(), onRaster = function(){};
+function rasterise(zFly){
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const S = clamp(Math.ceil(zFly * dpr * 1.25), 3, 5);
+  rasterRoseDone = svgToCanvasURL(roseSVGString, Math.round(ROSE_BB.w*S), Math.round(ROSE_BB.h*S)).then(function(u){
+    roseImg.setAttribute('x', ROSE_BB.x); roseImg.setAttribute('y', ROSE_BB.y);
+    roseImg.setAttribute('width', ROSE_BB.w); roseImg.setAttribute('height', ROSE_BB.h);
+    roseImg.setAttribute('href', u);
+    return preload(u);
+  }).then(function(){ roseImg.setAttribute('display', 'inline'); roseLive.setAttribute('display', 'none'); onRaster('rose'); })
+    .catch(function(e){ console.warn('rose raster failed, keeping live SVG:', e); });
+  const WS = clamp(Math.ceil(zFly * dpr * S_FLY * 1.25 * 10) / 10, 1.2, 2.2);
+  function sprite(w, vb){
+    return svgToCanvasURL(BF.spriteSVG(w, vb, WS), Math.round(vb[2]*WS), Math.round(vb[3]*WS)).then(function(u){
+      mk('image', { x: vb[0], y: vb[1], width: vb[2], height: vb[3], href: u, preserveAspectRatio: 'none' }, w.flap);
+      return preload(u).then(function(){ w.live.setAttribute('display', 'none'); onRaster('wing'); });
+    }).catch(function(e){ console.warn('wing raster failed, keeping live SVG:', e); });
+  }
+  rasterWingsDone = Promise.all([sprite(BF.L, BF.vbL), sprite(BF.R, BF.vbR)]);
+}
+
+// ------------------------------------------------------------ flight: path, camera, heading (pre-computed at 120 Hz)
+const DT = 1/120, NSTEP = Math.ceil((T_END + 0.6) / DT);
+const SIM = { x: null, y: null, rot: null, bank: null, cx: null, cy: null, ph: null };
+const hOf = t => 1 - ss((t - 8.8) / 3.4);                       // height above the page: 1 in flight, 0 when landed
+
+function crPt(P, i, u){
+  const p0 = P[Math.max(0, i-1)], p1 = P[i], p2 = P[i+1], p3 = P[Math.min(P.length-1, i+2)], u2 = u*u, u3 = u2*u, o = [0,0];
+  for (let k = 0; k < 2; k++) o[k] = .5*((2*p1[k]) + (-p0[k]+p2[k])*u + (2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*u2 + (-p0[k]+3*p1[k]-3*p2[k]+p3[k])*u3);
+  return o;
+}
+function precompute(){
+  const P = PATH_PTS, samp = []; let acc = 0, prev = null;
+  for (let i = 0; i < P.length-1; i++) for (let k = 0; k <= 60; k++){
+    if (i > 0 && k === 0) continue;
+    const p = crPt(P, i, k/60); if (prev) acc += Math.hypot(p[0]-prev[0], p[1]-prev[1]);
+    samp.push([p[0], p[1], acc]); prev = p;
+  }
+  const total = acc;
+  function pathAt(s){
+    s = clamp(s, 0, total); let lo = 0, hi = samp.length-1;
+    while (hi - lo > 1){ const m = (lo+hi) >> 1; if (samp[m][2] <= s) lo = m; else hi = m; }
+    const a = samp[lo], b = samp[hi], u = (s - a[2]) / ((b[2]-a[2]) || 1);
+    const a2 = samp[Math.max(0, lo-2)], b2 = samp[Math.min(samp.length-1, hi+2)];
+    const tx = b2[0]-a2[0], ty = b2[1]-a2[1];
+    return { x: lerp(a[0], b[0], u), y: lerp(a[1], b[1], u), ang: Math.atan2(tx, -ty) * 180 / Math.PI };
+  }
+  // speed profile -> arc length s(t)
+  const cum = new Float64Array(NSTEP+1); let c = 0;
+  for (let i = 0; i <= NSTEP; i++){ const t = i*DT; const v = ss((t-.5)/2.2) * (1 - ss((t-9.0)/3.3)); cum[i] = c; c += v*DT; }
+  const cumEnd = cum[NSTEP];
+  const X = new Float32Array(NSTEP+1), Y = new Float32Array(NSTEP+1), TA = new Float32Array(NSTEP+1);
+  for (let i = 0; i <= NSTEP; i++){
+    const t = i*DT, p = pathAt(total * cum[i] / cumEnd), h = hOf(t);
+    const lh = ss(h * 1.6), amp = (3.2 + 5.5*(1 - ss(t/2.8))) * lh;
+    const hx = amp*(Math.sin(1.9*t) + .45*Math.sin(3.7*t + 1)), hy = amp*(.8*Math.cos(1.5*t + .5) + .35*Math.sin(4.1*t));
+    const bob = 2.2 * lh * Math.sin(2*Math.PI*.9*t);
+    X[i] = p.x + hx; Y[i] = p.y + hy + bob;
+    TA[i] = p.ang;
+  }
+  // heading target (unwrapped), blended to the resting angle while landing
+  const target = new Float32Array(NSTEP+1); let prevA = TA[0];
+  for (let i = 0; i <= NSTEP; i++){
+    let a = TA[i]; a += 360 * Math.round((prevA - a) / 360); prevA = a;
+    const w = ss((i*DT - 10.4) / 1.5), rest = REST_ANGLE + 360 * Math.round((a - REST_ANGLE) / 360);
+    target[i] = lerp(a, rest, w);
+  }
+  const RX = new Float32Array(NSTEP+1), RY = new Float32Array(NSTEP+1), ROT = new Float32Array(NSTEP+1), BANK = new Float32Array(NSTEP+1), PH = new Float32Array(NSTEP+1);
+  let cx = X[0], cy = Y[0], vx = 0, vy = 0, ang = target[0], av = 0, ph = 0;
+  const wc = 5.0, wa = 6.0;
+  for (let i = 0; i <= NSTEP; i++){
+    const t = i*DT, i0 = Math.max(0, i-1), i1 = Math.min(NSTEP, i+1);
+    const bvx = (X[i1]-X[i0]) / ((i1-i0)*DT), bvy = (Y[i1]-Y[i0]) / ((i1-i0)*DT);
+    const tx = X[i] + bvx*.25, ty = Y[i] + bvy*.25;
+    RX[i] = cx; RY[i] = cy; ROT[i] = ang; BANK[i] = clamp((target[i] - ang) / 55, -.4, .4); PH[i] = ph;
+    // critically damped follow
+    vx += (wc*wc*(tx - cx) - 2*wc*vx) * DT; vy += (wc*wc*(ty - cy) - 2*wc*vy) * DT; cx += vx*DT; cy += vy*DT;
+    av += (wa*wa*(target[i] - ang) - 2*wa*av) * DT; ang += av*DT;
+    const fq = t < 10 ? lerp(3.4, 4.4, ss(t/2.5)) : lerp(4.4, 1.0, ss((t-10)/2.6));
+    ph += 2*Math.PI*fq*DT;
+  }
+  SIM.x = X; SIM.y = Y; SIM.rot = ROT; SIM.bank = BANK; SIM.cx = RX; SIM.cy = RY; SIM.ph = PH; SIM.total = total;
+}
+function simAt(arr, t){ const f = clamp(t, 0, T_END) / DT, i = Math.floor(f), u = f - i; return lerp(arr[i], arr[Math.min(i+1, NSTEP)], u); }
+
+// ------------------------------------------------------------ layout (depends on viewport aspect + message size)
+const MSG = { w100: [650, 330], ready: false };
+let LAYOUT = null;
+function computeLayout(){
+  W = innerWidth; H = innerHeight;
+  const landscape = W / H > .85, L = { landscape: landscape };
+  // flight zoom: butterfly (flying, wings open) fills ~46% of the screen height, but never wider than ~78% of the width
+  L.zFly = Math.min(.37*H / (570*S_FLY), .78*W / (1000*S_FLY*.9));
+  if (landscape){ L.msgW = 470; L.msgX = 335; }
+  else { L.msgW = 440; L.msgX = 28 - 220; }
+  L.fs1 = L.msgW / MSG.w100[0] * 100; L.fs2 = L.fs1 * .56;
+  const blockH = .8*L.fs1 + .95*L.fs1 + .3*L.fs2;
+  const top = landscape ? 100 - blockH/2 : 560;
+  L.base1 = top + .8*L.fs1; L.base2 = L.base1 + .95*L.fs1;
+  const box = { x0: ROSE_BOX.x0, x1: ROSE_BOX.x1, y0: ROSE_BOX.y0, y1: ROSE_BOX.y1 };
+  box.x1 = Math.max(box.x1, L.msgX + L.msgW); box.x0 = Math.min(box.x0, L.msgX);
+  box.y1 = Math.max(box.y1, L.base2 + .35*L.fs2 + 20);
+  L.cfin = [(box.x0 + box.x1)/2, (box.y0 + box.y1)/2];
+  L.zFin = Math.min(W * .93 / (box.x1 - box.x0), H * .93 / (box.y1 - box.y0));
+  return L;
+}
+
+// ------------------------------------------------------------ particles at two depths (parallax)
+const FAR = [], NEAR = [];
+const FAR_K = .6, NEAR_K = 1.75, FAR_TILE = [1900, 1300], NEAR_TILE = [520, 360];
+function buildParticles(){
+  const r = prng(31);
+  for (let i = 0; i < 70; i++){
+    const big = i % 7 === 0, rr = big ? 5 + r()*4 : .9 + r()*1.9;
+    const el = mk('circle', { r: (rr*2.3).toFixed(2), fill: big ? 'url(#sc_bokeh)' : 'url(#sc_mote)' }, farL);
+    FAR.push({ el: el, bx: r(), by: r(), vx: -5 + r()*10, vy: 2 + r()*7, ph: r()*6.28, o: big ? .6 : .55 + r()*.45 });
+  }
+  const shape = 'M0,-1 C.75,-.95 1.05,-.15 .5,.75 L.14,.5 L0,.62 L-.14,.5 L-.5,.75 C-1.05,-.15 -.75,-.95 0,-1Z';
+  for (let i = 0; i < 14; i++){
+    const red = i % 4 === 3, sz = 9 + r()*13;
+    const el = mk('path', { d: shape, fill: red ? 'url(#sc_petalB)' : 'url(#sc_petalA)' }, nearL);
+    NEAR.push({ el: el, bx: r(), by: r(), vx: -12 + r()*20, vy: 6 + r()*14, rot: r()*360, rv: (r()-.5)*70, sz: sz, ph: r()*6.28, o: red ? .38 : .5 });
+  }
+}
+function wrapv(v, o, size){ return o + (((v - o) % size) + size) % size; }
+function updateParticles(t, cx, cy, z, vis){
+  farL.setAttribute('transform', 'translate('+W/2+' '+H/2+') scale('+z*FAR_K+') translate('+(-cx)+' '+(-cy)+')');
+  nearL.setAttribute('transform', 'translate('+W/2+' '+H/2+') scale('+z*NEAR_K+') translate('+(-cx)+' '+(-cy)+')');
+  farL.setAttribute('opacity', vis.toFixed(3)); nearL.setAttribute('opacity', vis.toFixed(3));
+  if (vis <= 0.001) return;
+  const fx0 = cx - FAR_TILE[0]/2, fy0 = cy - FAR_TILE[1]/2, nx0 = cx - NEAR_TILE[0]/2, ny0 = cy - NEAR_TILE[1]/2;
+  for (const p of FAR){
+    const x = wrapv(p.bx*FAR_TILE[0] + fx0 + p.vx*t + 6*Math.sin(t*.7 + p.ph), fx0, FAR_TILE[0]);
+    const y = wrapv(p.by*FAR_TILE[1] + fy0 + p.vy*t + 5*Math.cos(t*.6 + p.ph), fy0, FAR_TILE[1]);
+    p.el.setAttribute('cx', x.toFixed(1)); p.el.setAttribute('cy', y.toFixed(1)); p.el.setAttribute('opacity', p.o.toFixed(2));
+  }
+  for (const p of NEAR){
+    const x = wrapv(p.bx*NEAR_TILE[0] + nx0 + p.vx*t + 10*Math.sin(t*.9 + p.ph), nx0, NEAR_TILE[0]);
+    const y = wrapv(p.by*NEAR_TILE[1] + ny0 + p.vy*t + 8*Math.cos(t*.7 + p.ph), ny0, NEAR_TILE[1]);
+    const sx = Math.abs(Math.cos(t*.8 + p.ph))*.5 + .5;
+    p.el.setAttribute('transform', 'translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+(p.rot + p.rv*t).toFixed(1)+') scale('+(p.sz*sx).toFixed(1)+' '+p.sz.toFixed(1)+')');
+    p.el.setAttribute('opacity', p.o.toFixed(2));
+  }
+}
+
+// ------------------------------------------------------------ handwriting
+const GL = { glyphs: [], lines: [], built: false };
+function measureLine(str){
+  const m = $('measure'); m.setAttribute('font-family', FONT_STACK); m.setAttribute('font-size', 100); m.textContent = str;
+  const n = m.getNumberOfChars(), xs = [], ws = [];
+  for (let i = 0; i < n; i++){ xs.push(m.getStartPositionOfChar(i).x); ws.push(m.getExtentOfChar(i).width); }
+  return { w: m.getComputedTextLength(), xs: xs, ws: ws, n: n, str: str };
+}
+function measureMessage(){
+  const a = measureLine(MESSAGE_LINE_1), b = measureLine(MESSAGE_LINE_2);
+  MSG.w100 = [a.w, b.w]; MSG.a = a; MSG.b = b; MSG.ready = true;
+}
+function buildText(L){
+  txtG.replaceChildren(); GL.glyphs = []; GL.lines = [];
+  const lines = [
+    { m: MSG.a, fs: L.fs1, base: L.base1, win: WRITE1, x0: L.msgX },
+    { m: MSG.b, fs: L.fs2, base: L.base2, win: WRITE2, x0: L.msgX + L.msgW - MSG.b.w * L.fs2 / 100 }
+  ];
+  lines.forEach(function(ln){
+    const sc = ln.fs / 100, gl = [];
+    let total = 0;
+    for (let i = 0; i < ln.m.n; i++){
+      const ch = ln.m.str[i]; if (ch === ' ') { total += ln.m.ws[i] * sc * .6; continue; }
+      const adv = ln.m.ws[i] * sc;
+      total += adv + ln.fs * .12;
+      gl.push({ ch: ch, x: ln.x0 + ln.m.xs[i]*sc, adv: adv, i: i });
+    }
+    let acc = 0;
+    for (let i = 0, gi = 0; i < ln.m.n; i++){
+      if (ln.m.str[i] === ' ') { acc += ln.m.ws[i] * sc * .6; continue; }
+      const g = gl[gi++], wgt = g.adv + ln.fs * .12;
+      g.ts = lerp(ln.win[0], ln.win[1], acc / total); g.td = (ln.win[1] - ln.win[0]) * wgt / total * 1.05;
+      acc += wgt;
+    }
+    gl.forEach(function(g){
+      g.len = ln.fs * (1.6 + 4.3 * g.adv / ln.fs);
+      g.el = mk('text', { x: g.x.toFixed(2), y: ln.base.toFixed(2), 'font-family': FONT_STACK, 'font-size': ln.fs.toFixed(2),
+        fill: INK, 'fill-opacity': 0, stroke: INK, 'stroke-width': (ln.fs * .017).toFixed(2), 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        'stroke-dasharray': g.len.toFixed(1) + ' ' + (g.len * 40).toFixed(1), 'stroke-dashoffset': g.len.toFixed(1), visibility: 'hidden' }, txtG);
+      g.el.textContent = g.ch;
+      GL.glyphs.push(g);
+    });
+    GL.lines.push({ glyphs: gl, win: ln.win, fs: ln.fs, base: ln.base });
+  });
+  GL.built = true;
+}
+function updateText(t){
+  if (!GL.built) return;
+  for (const g of GL.glyphs){
+    const p = clamp((t - g.ts) / g.td, 0, 1);
+    if (p <= 0) { if (g.vis !== 0) { g.el.setAttribute('visibility', 'hidden'); g.vis = 0; } continue; }
+    g.vis = 1; g.el.setAttribute('visibility', 'visible');
+    g.el.setAttribute('stroke-dashoffset', (g.len * (1 - p)).toFixed(1));
+    g.el.setAttribute('fill-opacity', ss((t - (g.ts + g.td*.75)) / .9).toFixed(3));
+  }
+  // pen nib follows the glyph being written
+  let nib = null, op = 0;
+  for (const ln of GL.lines){
+    const gs = ln.glyphs, last = gs[gs.length-1];
+    if (t < gs[0].ts - .15 || t > last.ts + last.td + .35) continue;
+    let cur = gs[0];
+    for (const g of gs) if (t >= g.ts) cur = g;
+    const p = clamp((t - cur.ts) / cur.td, 0, 1);
+    const x = cur.x + cur.adv * (.1 + .85 * p), y = ln.base - ln.fs * (.16 + .22 * (.5 + .5 * Math.sin(p * 8 + cur.i)));
+    nib = { x: x, y: y, s: ln.fs / 72 };
+    op = clamp(Math.min((t - gs[0].ts + .15) / .2, (last.ts + last.td + .35 - t) / .3), 0, 1);
+  }
+  if (nib){ nibEl.setAttribute('transform', 'translate('+nib.x.toFixed(1)+' '+nib.y.toFixed(1)+') scale('+nib.s.toFixed(3)+')'); nibEl.setAttribute('opacity', op.toFixed(2)); }
+  else nibEl.setAttribute('opacity', 0);
+}
+
+// ------------------------------------------------------------ render one moment
+function render(t){
+  if (!LAYOUT || !BF) return;
+  const tt = Math.min(t, T_END);
+  const h = hOf(tt), s = S_REST * (1 + .65*h);
+  const px = simAt(SIM.x, tt), py = simAt(SIM.y, tt), rot = simAt(SIM.rot, tt), bank = simAt(SIM.bank, tt), ph = simAt(SIM.ph, tt);
+  // camera: damped follow -> blended into the final framing while zooming out
+  const e = easeIO((tt - 9.0) / 3.4);
+  const z = Math.exp(lerp(Math.log(LAYOUT.zFly), Math.log(LAYOUT.zFin), e));
+  const cx = lerp(simAt(SIM.cx, tt), LAYOUT.cfin[0], e), cy = lerp(simAt(SIM.cy, tt), LAYOUT.cfin[1], e);
+  const tr = 'translate('+W/2+' '+H/2+') scale('+z.toFixed(5)+') translate('+(-cx).toFixed(2)+' '+(-cy).toFixed(2)+')';
+  worldA.setAttribute('transform', tr); worldB.setAttribute('transform', tr);
+  // wings
+  const A = 1 - ss((t - 12.0) / 1.3);
+  const flapF = 1 - .86 * Math.pow(.5 - .5*Math.cos(ph), 1.15);
+  let pulse = 0; if (t > 14.2){ const tp = (t - 14.2) % 3.2; if (tp < 1.5) pulse = Math.pow(Math.sin(Math.PI * tp / 1.5), 2); }
+  const restF = .9 - .5*pulse;
+  const f = A * flapF + (1 - A) * restF;
+  const bk = bank * A;
+  const fl = clamp(f * (1 - .9*bk), .06, 1), fr = clamp(f * (1 + .9*bk), .06, 1);
+  BF.L.flap.setAttribute('transform', 'translate(500 0) scale('+fl.toFixed(3)+' 1) translate(-500 0)');
+  BF.R.flap.setAttribute('transform', 'translate(500 0) scale('+fr.toFixed(3)+' 1) translate(-500 0)');
+  bflyG.setAttribute('transform', 'translate('+px.toFixed(2)+' '+py.toFixed(2)+') rotate('+rot.toFixed(2)+') scale('+s.toFixed(4)+') translate(-500 -290)');
+  // soft shadow on the page / petals
+  const fm = (fl + fr) / 2;
+  shadowEl.setAttribute('transform', 'translate('+(px + 30*h + 1).toFixed(2)+' '+(py + 44*h + 2.5).toFixed(2)+') rotate('+rot.toFixed(2)+') translate(0 '+(120*s).toFixed(2)+') scale('+(1 + .2*h).toFixed(3)+')');
+  shadowEl.setAttribute('rx', (480*s*(.18 + .82*fm)).toFixed(2)); shadowEl.setAttribute('ry', (250*s).toFixed(2));
+  shadowEl.setAttribute('opacity', (.5 - .3*h).toFixed(3));
+  // particles fade away as the camera settles
+  updateParticles(t, cx, cy, z, 1 - ss((tt - 10.6) / 3.0));
+  updateText(tt);
+  vigEl.setAttribute('width', W); vigEl.setAttribute('height', H);
+  if (t >= T_END - 1e-6) againBtn.classList.add('show'); else againBtn.classList.remove('show');
+}
+
+// ------------------------------------------------------------ boot
+let t0 = 0, lastT = DEBUG ? DEBUG_T : 0;
+function frame(now){
+  const t = (now - t0) / 1000; lastT = t; render(t);
+  requestAnimationFrame(frame);
+}
+function relayout(){
+  W = innerWidth; H = innerHeight;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  LAYOUT = computeLayout();
+  if (MSG.ready) buildText(LAYOUT);
+  render(DEBUG ? DEBUG_T : lastT);
+}
+async function fontsReady(){
+  try {
+    await Promise.race([Promise.all([document.fonts.load('80px "Great Vibes"'), document.fonts.ready]), new Promise(function(r){ setTimeout(r, 3500); })]);
+  } catch (e) { console.warn('font wait failed', e); }
+}
+function boot(){
+  try {
+    buildPaper(); buildRose(); buildButterfly(); buildParticles(); precompute();
+  } catch (e) { fail('build failed: ' + (e && e.stack || e)); return; }
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  LAYOUT = computeLayout();
+  render(DEBUG ? DEBUG_T : 0);
+  // sanity: both drawings must be present
+  if (roseLive.childNodes.length < 20 || BF.L.live.childNodes.length < 3 || BF.body.childNodes.length < 5) fail('drawing missing: rose=' + roseLive.childNodes.length + ' wing=' + BF.L.live.childNodes.length + ' body=' + BF.body.childNodes.length);
+  window.__sceneReady = true;
+  window.__renderAt = function(t){ render(t); };   // used by the MP4 exporter
+  againBtn.onclick = function(){ t0 = performance.now(); lastT = 0; againBtn.classList.remove('show'); };
+  addEventListener('resize', relayout);
+  onRaster = function(){ if (DEBUG) render(DEBUG_T); };
+  rasterise(LAYOUT.zFly);
+  const fontsP = fontsReady().then(function(){
+    try { measureMessage(); LAYOUT = computeLayout(); buildText(LAYOUT); render(DEBUG ? DEBUG_T : lastT); } catch (e) { fail('text build failed: ' + (e && e.stack || e)); }
+  });
+  if (DEBUG) return;
+  // normal play: wait (briefly) for fonts + the pre-rendered bitmaps, then start the clock
+  const cap = new Promise(function(r){ setTimeout(r, 6000); });
+  Promise.race([Promise.all([fontsP, rasterRoseDone, rasterWingsDone]), cap]).then(function(){
+    t0 = performance.now(); requestAnimationFrame(frame);
+  });
+}
+boot();
+})();
+</script>
+</body>
+</html>

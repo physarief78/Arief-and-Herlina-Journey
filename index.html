@@ -343,6 +343,19 @@
   }
   .chapter:hover .go, .chapter:focus-visible .go { transform: translateX(4px); }
   .chapter:active { transform: none; transition-duration: 110ms; }
+  .chapter + .chapter { margin-top: .7em; }
+
+  /* ------------------------------------------------------ CHAPTER TWO
+     The butterfly and the rose is its own page (chapters/), shown full
+     screen over the landing. It fades in over the paper and loads fresh
+     each time, so the animation always starts from the beginning. */
+  #chapter2 {
+    position: fixed; inset: 0; z-index: 9; background: var(--bg);
+    opacity: 0; visibility: hidden;
+    transition: opacity 700ms var(--ease), visibility 0s linear 700ms;
+  }
+  #chapter2.show { opacity: 1; visibility: visible; transition: opacity 700ms var(--ease), visibility 0s; }
+  #chapter2 iframe { display: block; width: 100%; height: 100%; border: 0; }
 
   /* ------------------------------------------------------------- LETTER */
   #letter {
@@ -568,6 +581,11 @@
           <span><span class="title">A Commitment Letter</span><span class="sub">from Arief to Herlina</span></span>
           <span class="go" aria-hidden="true">&rarr;</span>
         </button>
+        <button id="open2" class="chapter" type="button">
+          <span class="num">02</span>
+          <span><span class="title">A Butterfly and a Rose</span><span class="sub">for beautiful Erlin</span></span>
+          <span class="go" aria-hidden="true">&rarr;</span>
+        </button>
       </nav>
     </div>
   </div>
@@ -588,6 +606,8 @@
   <p>Until then, I ask for your patience. I am working toward that day.</p>
   <p class="sign">With sincerity and commitment,<b>Muhammad Arief Mulyana</b></p>
 </div>
+
+<div id="chapter2" aria-hidden="true"></div>
 
 <div id="err"></div>
 
@@ -1916,7 +1936,7 @@
 
   function viewFromHistory(state) {
     var v = state && state[HISTORY_VIEW_KEY];
-    return v === 'present' || v === 'greeting' ? v : 'cover';
+    return v === 'present' || v === 'greeting' || v === 'butterfly' ? v : 'cover';
   }
 
   var desiredView = viewFromHistory(history.state);
@@ -1995,7 +2015,47 @@
   }
   if (desiredView !== 'cover') hideCover(true);
 
+  // Chapter two lives in its own page, framed full screen over the landing.
+  // A fresh frame is made on open and removed on close: that restarts the
+  // animation every visit, keeps it from running unseen in the background,
+  // and -- unlike changing a frame's src -- adds nothing to the browser
+  // history, so Back/Forward still step between the views.
+  var ch2El = document.getElementById('chapter2');
+  var open2Btn = document.getElementById('open2');
+  var ch2Timer = 0;
+  var CH2_SRC = 'chapters/butterfly-and-rose.html';
+  function showChapter2() {
+    clearTimeout(ch2Timer);
+    if (ch2El.classList.contains('show')) return;
+    open2Btn.classList.add('pressed');
+    ch2Timer = setTimeout(function () {
+      ch2El.innerHTML = '';
+      var fr = document.createElement('iframe');
+      fr.title = 'A Butterfly and a Rose';
+      fr.src = CH2_SRC;
+      ch2El.appendChild(fr);
+      ch2El.setAttribute('aria-hidden', 'false');
+      ch2El.classList.add('show');
+      open2Btn.classList.remove('pressed');
+      try { fr.focus(); } catch (_) {}
+    }, PRESS_LEAD);
+  }
+  function hideChapter2() {
+    clearTimeout(ch2Timer);
+    open2Btn.classList.remove('pressed');
+    if (!ch2El.classList.contains('show')) return;
+    ch2El.classList.remove('show');
+    ch2El.setAttribute('aria-hidden', 'true');
+    ch2Timer = setTimeout(function () { ch2El.innerHTML = ''; }, 750);
+  }
+
   function syncToDesiredView() {
+    if (desiredView === 'butterfly') {
+      hideCover(true);
+      showChapter2();
+      return;
+    }
+    hideChapter2();
     if (desiredView === 'cover') {
       if (act === ACT.SETTLED) beginClosing();   // back down to the landing first
       else if (act === ACT.GATE) showCover();
@@ -2019,6 +2079,14 @@
     if (viewFromHistory(history.state) !== 'present') writeHistoryView('present', false);
     syncToDesiredView();
   }
+
+  function showButterfly() {
+    if (act !== ACT.GATE) return;      // only from the landing page
+    desiredView = 'butterfly';
+    if (viewFromHistory(history.state) !== 'butterfly') writeHistoryView('butterfly', false);
+    syncToDesiredView();
+  }
+  open2Btn.addEventListener('click', showButterfly);
 
   window.addEventListener('popstate', function (e) {
     desiredView = viewFromHistory(e.state);
