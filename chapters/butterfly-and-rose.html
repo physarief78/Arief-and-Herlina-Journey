@@ -68,10 +68,12 @@
   <pattern id="sc_grain" patternUnits="userSpaceOnUse" width="128" height="128"><image id="grainImg" x="0" y="0" width="128" height="128"/></pattern>
 </defs>
 <defs id="roseDefs"></defs>
+<!-- Paper: the flat colour is the page background (html,body); the grain is ONE screen-sized rect (its pattern is
+     re-anchored to the camera every frame in render()), so no 5600x5200-unit surface is ever filled -- huge pattern
+     fills are what mobile GPUs choke on (banding streaks, dropped tiles). -->
+<g id="worldP"><g id="stains"></g></g>
+<rect id="grainRect" x="0" y="0" width="100" height="100" fill="url(#sc_grain)" pointer-events="none"/>
 <g id="worldA">
-  <rect x="-2800" y="-2200" width="5600" height="5200" fill="#f3ede3"/>
-  <g id="stains"></g>
-  <rect x="-2800" y="-2200" width="5600" height="5200" fill="url(#sc_grain)"/>
   <g id="roseWrap" transform="translate(-252 -130)"><g id="roseLive"></g><image id="roseImg" display="none" preserveAspectRatio="none"/></g>
   <g id="txt"></g>
 </g>
@@ -649,7 +651,7 @@ if (param('t') !== null && param('t') !== '' && isFinite(parseFloat(param('t')))
 else if (qs.has('final') || hs.has('final')) DEBUG_T = T_END;
 const DEBUG = DEBUG_T !== null;
 
-const svg = $('scene'), worldA = $('worldA'), worldB = $('worldB'), farL = $('farL'), nearL = $('nearL');
+const svg = $('scene'), worldA = $('worldA'), worldP = $('worldP'), grainRect = $('grainRect'), grainPat = $('sc_grain'), worldB = $('worldB'), farL = $('farL'), nearL = $('nearL');
 const roseLive = $('roseLive'), roseImg = $('roseImg'), txtG = $('txt'), bflyG = $('bfly'), shadowEl = $('shadow'), nibEl = $('nib');
 const againBtn = $('again'), vigEl = $('vig');
 let W = innerWidth, H = innerHeight;
@@ -703,37 +705,130 @@ function buildRose(){
 let BF = null;
 function buildButterfly(){ BF = Bfly.draw(bflyG, $('bfDefs')); }
 
-function svgToCanvasURL(str, wpx, hpx){
+// largest raster scale that keeps both sides <= MAX_SIDE device px and the area <= MAX_AREA (mobile GPUs / canvases
+// refuse or silently drop bigger surfaces; typical max texture size is 4096)
+const MAX_SIDE = 4096, MAX_AREA = 6e6;
+function capScale(S, w, h){ return Math.min(S, MAX_SIDE / Math.max(w, h), Math.sqrt(MAX_AREA / (w * h))); }
+function svgToCanvasURL(str, wpx, hpx, loadTimeout){
   return new Promise(function(resolve, reject){
+    let timer = null;
+    if (loadTimeout) timer = setTimeout(function(){ reject(new Error('svg image did not load within ' + loadTimeout + ' ms')); }, loadTimeout);
     const doc = new DOMParser().parseFromString(str, 'image/svg+xml');
     if (doc.getElementsByTagName('parsererror').length) { reject(new Error('sprite svg not well-formed')); return; }
     const url = URL.createObjectURL(new Blob([str], { type: 'image/svg+xml' }));
     const im = new Image();
     im.onload = function(){
+      if (timer) clearTimeout(timer);
       try {
         const c = document.createElement('canvas'); c.width = wpx; c.height = hpx;
-        c.getContext('2d').drawImage(im, 0, 0, wpx, hpx);
+        c.getContext('2d', { willReadFrequently: true }).drawImage(im, 0, 0, wpx, hpx);   // software canvas: one-off raster must not depend on GPU memory
         c.toBlob(function(b){ if (!b) { reject(new Error('toBlob failed')); return; } URL.revokeObjectURL(url); resolve(URL.createObjectURL(b)); }, 'image/png');
       } catch (e) { reject(e); }
     };
-    im.onerror = function(){ reject(new Error('svg image failed to load')); };
+    im.onerror = function(){ if (timer) clearTimeout(timer); reject(new Error('svg image failed to load')); };
     im.src = url;
   });
 }
 function preload(u){ return new Promise(function(res){ const t = new Image(); t.onload = t.onerror = res; t.src = u; }); }
+function loadImage(u, ms){
+  return new Promise(function(res, rej){
+    const t = new Image(), tm = setTimeout(function(){ rej(new Error('raster png did not load within ' + ms + ' ms')); }, ms);
+    t.onload = function(){ clearTimeout(tm); res(t); };
+    t.onerror = function(){ clearTimeout(tm); rej(new Error('raster png failed to decode')); };
+    t.src = u;
+  });
+}
+
+// ------------------------------------------------------------ rose safety net
+// The rose is normally shown as a one-off bitmap. If that bitmap cannot be made, is blank where the drawing must be
+// solid, or the browser stalls, the live vector rose (same markup, same <g>, so same place / camera / timing) is shown
+// instead, with the blur filters replaced by cheap filter-free equivalents.
+// Phones draw the rose as live vector by default: on some mobile GPUs the
+// pre-rendered raster decodes fine but is drawn blank, which the pixel check
+// above cannot see. The vector rose looks nearly identical. #forceRaster and
+// #forceVector override this for testing.
+const FORCE_RASTER = qs.has('forceRaster') || hs.has('forceRaster');
+const TOUCH_DEVICE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+const FORCE_VECTOR = qs.has('forceVector') || hs.has('forceVector') || (TOUCH_DEVICE && !FORCE_RASTER);
+let roseMode = null;
+function useRaster(){ roseMode = 'raster'; document.documentElement.dataset.rose = 'raster'; console.info('[rose] raster ok'); }
+function useVector(reason){
+  if (roseMode === 'vector-fallback') return;
+  roseMode = 'vector-fallback';
+  document.documentElement.dataset.rose = 'vector-fallback';
+  console.info('[rose] vector-fallback: ' + reason);
+  lightenRose();
+  roseImg.setAttribute('display', 'none');
+  roseLive.setAttribute('display', 'inline');
+  onRaster('rose');
+}
+function lightenRose(){
+  const defs = $('roseDefs'), cache = {};
+  roseLive.querySelectorAll('[filter]').forEach(function(el){
+    const tag = el.tagName;
+    if (tag === 'ellipse') {                       // blurred glow/shade blobs -> same blob with a soft radial falloff
+      const col = el.getAttribute('fill') || '#000';
+      let id = cache[col];
+      if (!id) {
+        id = cache[col] = 'rose_fb' + Object.keys(cache).length;
+        const g = mk('radialGradient', { id: id }, defs);
+        mk('stop', { offset: 0, 'stop-color': col, 'stop-opacity': 1 }, g); mk('stop', { offset: .55, 'stop-color': col, 'stop-opacity': .55 }, g); mk('stop', { offset: 1, 'stop-color': col, 'stop-opacity': 0 }, g);
+      }
+      el.setAttribute('fill', 'url(#' + id + ')'); el.removeAttribute('filter');
+    } else el.remove();                            // blurred drop shadows / stroke glows: purely decorative
+  });
+}
+// points that must be opaque in a finished rose, derived from the drawing's own geometry (rose-local coordinates)
+function roseSamples(){
+  const HC = [252, 130], GA = -14 * Math.PI / 180, GSX = 1.04, GSY = .9;
+  const G = (x, y) => { const u = x * GSX, v = y * GSY; return [HC[0] + u * Math.cos(GA) - v * Math.sin(GA), HC[1] + u * Math.sin(GA) + v * Math.cos(GA)]; };
+  // midrib point (t = .5) of a leaflet(x, y, angDeg, len, ..., bend): well inside the blade, which is 40-90 units wide
+  const leaf = (x, y, ang, len, bend) => { const a = ang * Math.PI / 180, u = .5 * len, v = bend * len * .25;
+    return [x + u * Math.cos(a) - v * Math.sin(a), y + u * Math.sin(a) + v * Math.cos(a)]; };
+  return [
+    ['bloom centre', G(0, 0)], ['bloom left', G(-60, 20)], ['bloom upper right', G(45, -55)],
+    ['stem upper', [255.6, 300]], ['stem lower', [261.2, 600]],            // stem is about 13 units wide, centre line of the STEM path
+    ['leaf upper-left', leaf(214, 430, 188, 182, .05)], ['leaf right', leaf(335, 432, 21, 192, .06)], ['leaf lower-left', leaf(250, 514, 172, 128, -.05)]
+  ];
+}
+function verifyRose(im){
+  const sx = im.naturalWidth / ROSE_BB.w, sy = im.naturalHeight / ROSE_BB.h;
+  if (!(sx > 0 && sy > 0)) return 'raster has no size';
+  const c = document.createElement('canvas'); c.width = c.height = 1;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  let bad = null; const alphas = [];
+  try {
+    for (const [name, p] of roseSamples()) {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.drawImage(im, Math.round((p[0] - ROSE_BB.x) * sx), Math.round((p[1] - ROSE_BB.y) * sy), 1, 1, 0, 0, 1, 1);
+      const a = ctx.getImageData(0, 0, 1, 1).data[3]; alphas.push(name + '=' + a);
+      if (a < 40 && !bad) bad = 'sample "' + name + '" at (' + p[0].toFixed(0) + ',' + p[1].toFixed(0) + ') is transparent (alpha ' + a + ')';
+    }
+  } catch (e) { return 'cannot read raster pixels: ' + (e && e.message || e); }
+  window.__roseAlphas = alphas;
+  return bad;
+}
 
 let rasterRoseDone = Promise.resolve(), rasterWingsDone = Promise.resolve(), onRaster = function(){};
 function rasterise(zFly){
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const S = clamp(Math.ceil(zFly * dpr * 1.25), 3, 5);
-  rasterRoseDone = svgToCanvasURL(roseSVGString, Math.round(ROSE_BB.w*S), Math.round(ROSE_BB.h*S)).then(function(u){
-    roseImg.setAttribute('x', ROSE_BB.x); roseImg.setAttribute('y', ROSE_BB.y);
-    roseImg.setAttribute('width', ROSE_BB.w); roseImg.setAttribute('height', ROSE_BB.h);
-    roseImg.setAttribute('href', u);
-    return preload(u);
-  }).then(function(){ roseImg.setAttribute('display', 'inline'); roseLive.setAttribute('display', 'none'); onRaster('rose'); })
-    .catch(function(e){ console.warn('rose raster failed, keeping live SVG:', e); });
-  const WS = clamp(Math.ceil(zFly * dpr * S_FLY * 1.25 * 10) / 10, 1.2, 2.2);
+  const S = capScale(clamp(Math.ceil(zFly * dpr * 1.25), 3, 5), ROSE_BB.w, ROSE_BB.h);
+  const rw = Math.round(ROSE_BB.w*S), rh = Math.round(ROSE_BB.h*S);
+  // explicit width/height: without them the standalone svg has no intrinsic size and mobile browsers size it unpredictably
+  const roseStr = roseSVGString.replace('<svg ', '<svg width="' + rw + '" height="' + rh + '" ');
+  if (FORCE_VECTOR) { useVector(qs.has('forceVector') || hs.has('forceVector') ? 'forced by #forceVector' : 'touch device default'); rasterRoseDone = Promise.resolve(); }
+  else rasterRoseDone = svgToCanvasURL(roseStr, rw, rh, 2500).then(function(u){
+    return loadImage(u, 4000).then(function(im){
+      const bad = verifyRose(im);
+      if (bad) throw new Error(bad);
+      roseImg.setAttribute('x', ROSE_BB.x); roseImg.setAttribute('y', ROSE_BB.y);
+      roseImg.setAttribute('width', ROSE_BB.w); roseImg.setAttribute('height', ROSE_BB.h);
+      roseImg.setAttribute('href', u);
+      window.__roseRasterPx = [im.naturalWidth, im.naturalHeight];
+    });
+  }).then(function(){ roseImg.setAttribute('display', 'inline'); roseLive.setAttribute('display', 'none'); useRaster(); onRaster('rose'); })
+    .catch(function(e){ useVector(String(e && e.message || e)); });
+  const WS = capScale(clamp(Math.ceil(zFly * dpr * S_FLY * 1.25 * 10) / 10, 1.2, 2.2), 524, 650);
   function sprite(w, vb){
     return svgToCanvasURL(BF.spriteSVG(w, vb, WS), Math.round(vb[2]*WS), Math.round(vb[3]*WS)).then(function(u){
       mk('image', { x: vb[0], y: vb[1], width: vb[2], height: vb[3], href: u, preserveAspectRatio: 'none' }, w.flap);
@@ -949,7 +1044,12 @@ function render(t){
   const z = Math.exp(lerp(Math.log(LAYOUT.zFly), Math.log(LAYOUT.zFin), e));
   const cx = lerp(simAt(SIM.cx, tt), LAYOUT.cfin[0], e), cy = lerp(simAt(SIM.cy, tt), LAYOUT.cfin[1], e);
   const tr = 'translate('+W/2+' '+H/2+') scale('+z.toFixed(5)+') translate('+(-cx).toFixed(2)+' '+(-cy).toFixed(2)+')';
-  worldA.setAttribute('transform', tr); worldB.setAttribute('transform', tr);
+  worldA.setAttribute('transform', tr); worldB.setAttribute('transform', tr); worldP.setAttribute('transform', tr);
+  // grain pattern: same world anchoring as before (tile 128 units, origin = world origin) but expressed in screen space,
+  // with the offset reduced modulo one tile so every coordinate the GPU sees stays small
+  const tile = 128 * z;
+  const gox = (((W/2 - cx*z) % tile) + tile) % tile, goy = (((H/2 - cy*z) % tile) + tile) % tile;
+  grainPat.setAttribute('patternTransform', 'translate('+gox.toFixed(2)+' '+goy.toFixed(2)+') scale('+z.toFixed(5)+')');
   // wings
   const A = 1 - ss((t - 12.0) / 1.3);
   const flapF = 1 - .86 * Math.pow(.5 - .5*Math.cos(ph), 1.15);
@@ -970,6 +1070,7 @@ function render(t){
   updateParticles(t, cx, cy, z, 1 - ss((tt - 10.6) / 3.0));
   updateText(tt);
   vigEl.setAttribute('width', W); vigEl.setAttribute('height', H);
+  grainRect.setAttribute('width', W); grainRect.setAttribute('height', H);
   if (t >= T_END - 1e-6) againBtn.classList.add('show'); else againBtn.classList.remove('show');
 }
 
