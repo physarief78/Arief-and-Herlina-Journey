@@ -39,7 +39,7 @@ node tools/verify_geometry.js
 
 - **Change the photo:** replace `assets/journey.jpg`, and update its caption in the template's `.photo` figure.
 - **Add an entry to the contents:** add another `.chapter` button inside the `.menu` in the template.
-- **Chapter 2** is a standalone page, `chapters/butterfly-and-rose.html`, not generated. The landing page shows it full screen in a frame. Its message is set by `MESSAGE_LINE_1` and `MESSAGE_LINE_2` at the top of its script, and its handwriting font, Great Vibes, loads from Google Fonts (a system script font is used offline).
+- **Chapter 2** is a standalone page, `chapters/butterfly-and-rose.html`, not generated. The landing page shows it full screen in a frame. Its message is set by `MESSAGE_LINE_1` and `MESSAGE_LINE_2` at the top of its script, and its handwriting font, Great Vibes, is bundled in `assets/fonts/` (SIL Open Font License, see `assets/fonts/OFL.txt`), so it works offline too.
 
 `tools/build/golden.json` and `tools/build/rose_params.json` are committed fixtures, so the geometry check runs on GitHub with Node.js alone.
 
@@ -50,6 +50,7 @@ node tools/verify_geometry.js
 | `index.html` | The generated site served by GitHub Pages |
 | `assets/journey.jpg` | The photograph on the introduction page |
 | `chapters/butterfly-and-rose.html` | Chapter 2, the butterfly-and-rose animation |
+| `assets/fonts/` | Great Vibes handwriting font for Chapter 2, with its licence |
 | `robots.txt` | Asks search engines not to index the site |
 | `tools/template_present.html` | Page structure, text, styling, and interaction |
 | `tools/rose_geometry.js` | Browser-side rose geometry |
