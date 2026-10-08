@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<script>
+  /* Site root = the directory this page was loaded from. The page always loads
+     at the root (the main-page/ stubs redirect here), but the address bar is
+     later moved to sub-paths, so every runtime-built URL resolves against this
+     fixed value instead of the current location. (No <base>: it would also
+     re-point the SVG url(#id) references.) */
+  window.SITE_ROOT = (function () {
+    var u = location.href.split(/[?#]/)[0];
+    return u.slice(0, u.lastIndexOf('/') + 1);
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="description" content="The story of Arief and Herlina." />
@@ -1743,7 +1754,7 @@
   //
   // The cover, the landing page and the letter are three views of one
   // document. Give them
-  // distinct same-URL history entries so the browser's Back/Forward controls
+  // distinct history entries (each with its own URL) so the browser's Back/Forward controls
   // mirror the on-page controls without reloading the WebGL scene.
   // =================================================================
   var HISTORY_VIEW_KEY = 'roseView';
@@ -1753,14 +1764,36 @@
     return v === 'present' || v === 'greeting' || v === 'butterfly' ? v : 'cover';
   }
 
-  var desiredView = viewFromHistory(history.state);
+  // Each screen has its own address, relative to the site root.
+  var VIEW_PATHS = { cover: '', greeting: 'main-page/', present: 'main-page/chapter-one/', butterfly: 'main-page/chapter-two/' };
+  var ROOT_PATH = (function () {
+    try { return new URL(window.SITE_ROOT).pathname; } catch (_) { return null; }
+  })();
+  function urlForView(view) {
+    return ROOT_PATH === null ? null : ROOT_PATH + VIEW_PATHS[view];
+  }
+
+  // The main-page/ stubs (and 404.html) send direct visits here as ?view=...
+  var queryView = (function () {
+    try {
+      var v = new URLSearchParams(location.search).get('view');
+      return v === 'greeting' || v === 'present' || v === 'butterfly' ? v : null;
+    } catch (_) { return null; }
+  })();
+
+  var desiredView = queryView || viewFromHistory(history.state);
 
   function writeHistoryView(view, replace) {
     var state = history.state && typeof history.state === 'object'
       ? Object.assign({}, history.state) : {};
     state[HISTORY_VIEW_KEY] = view;
+    var method = replace ? 'replaceState' : 'pushState';
+    var url = urlForView(view);
     try {
-      history[replace ? 'replaceState' : 'pushState'](state, '');
+      if (url !== null) {
+        try { history[method](state, '', url); return true; } catch (_) { /* e.g. file:// */ }
+      }
+      history[method](state, '');
       return true;
     } catch (_) {
       // The animation still works when History API access is restricted.
@@ -1769,8 +1802,9 @@
   }
 
   // A normal first visit is the cover. A reload of an existing entry keeps
-  // that entry, so Back/Forward still restores the right view.
-  if (desiredView === 'cover') writeHistoryView('cover', true);
+  // that entry, so Back/Forward still restores the right view. Either way the
+  // address bar is rewritten to the pretty URL (dropping any ?view=).
+  writeHistoryView(desiredView, true);
 
   // Cover <-> landing is pure CSS: the cover lifts away and the landing's
   // pieces rise in behind it. On a reload straight into a later view the
@@ -1837,7 +1871,7 @@
   var ch2El = document.getElementById('chapter2');
   var open2Btn = document.getElementById('open2');
   var ch2Timer = 0;
-  var CH2_SRC = 'chapters/butterfly-and-rose.html';
+  var CH2_SRC = window.SITE_ROOT + 'chapters/butterfly-and-rose.html';
   function showChapter2() {
     clearTimeout(ch2Timer);
     if (ch2El.classList.contains('show')) return;

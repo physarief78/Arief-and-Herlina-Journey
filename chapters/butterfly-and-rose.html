@@ -23,6 +23,18 @@
     background:rgba(243,237,227,.82);border:1px solid rgba(91,13,20,.45);border-radius:999px;padding:8px 16px;cursor:pointer;}
   #again.show{display:block;}
   #again:hover{background:rgba(255,250,240,.95);}
+  #play{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:14px;
+    background:none;border:0;padding:28px 36px;cursor:pointer;color:#5e1a20;z-index:5;-webkit-tap-highlight-color:transparent;
+    font:400 34px/1 "Great Vibes","Snell Roundhand","Segoe Script",cursive;letter-spacing:.02em;
+    transition:opacity .7s ease,visibility 0s linear .7s;animation:playPulse 2.6s ease-in-out infinite;}
+  #veil{position:fixed;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,#f1e9dc 0%,#e9dec9 60%,#dccdb4 100%);transition:opacity .9s ease,visibility 0s linear .9s;}
+  #veil.go{opacity:0;visibility:hidden;}
+  #play{white-space:nowrap;}
+  #play svg{width:46px;height:46px;display:block;}
+  #play.go{opacity:0;visibility:hidden;pointer-events:none;animation:none;}
+  #play:focus-visible{outline:2px solid rgba(94,26,32,.55);outline-offset:4px;border-radius:12px;}
+  @keyframes playPulse{0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(1);}50%{opacity:1;transform:translate(-50%,-50%) scale(1.05);}}
+  @media (prefers-reduced-motion:reduce){#play{animation:none;}}
   #fail{position:fixed;left:8px;top:8px;right:8px;font:12px monospace;color:#b00020;background:#fff;padding:6px;z-index:9;display:none;white-space:pre-wrap;}
 </style>
 </head>
@@ -88,6 +100,11 @@
 <text id="measure" x="0" y="0" visibility="hidden" xml:space="preserve"> </text>
 </svg>
 <button id="again" type="button">Play again</button>
+<div id="veil" aria-hidden="true"></div>
+<button id="play" type="button" aria-label="Play the animation">
+  <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19 15.5 L34 24 L19 32.5 Z" fill="currentColor"/></svg>
+  <span id="playLabel">Click to play</span>
+</button>
 <div id="fail"></div>
 <script>
 (function(){
@@ -1110,11 +1127,25 @@ function boot(){
   const fontsP = fontsReady().then(function(){
     try { measureMessage(); LAYOUT = computeLayout(); buildText(LAYOUT); render(DEBUG ? DEBUG_T : lastT); } catch (e) { fail('text build failed: ' + (e && e.stack || e)); }
   });
-  if (DEBUG) return;
-  // normal play: wait (briefly) for fonts + the pre-rendered bitmaps, then start the clock
+  if (DEBUG) { document.getElementById('play').style.display = 'none'; document.getElementById('veil').style.display = 'none'; return; }
+  // normal play: nothing moves until the reader taps. Fonts and bitmaps are
+  // prepared meanwhile; the clock starts at the tap (or when they finish, if later).
+  const playBtn = document.getElementById('play');
+  document.getElementById('playLabel').textContent = TOUCH_DEVICE ? 'Tap to play' : 'Click to play';
   const cap = new Promise(function(r){ setTimeout(r, 6000); });
-  Promise.race([Promise.all([fontsP, rasterRoseDone, rasterWingsDone]), cap]).then(function(){
-    t0 = performance.now(); requestAnimationFrame(frame);
+  const prepared = Promise.race([Promise.all([fontsP, rasterRoseDone, rasterWingsDone]), cap]);
+  let tapped;
+  const tapP = new Promise(function(r){ tapped = r; });
+  function onTap(e){
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    removeEventListener('pointerdown', onTap, true); removeEventListener('keydown', onTap, true);
+    e.preventDefault();
+    playBtn.classList.add('go'); document.getElementById('veil').classList.add('go'); tapped();
+  }
+  addEventListener('pointerdown', onTap, true);
+  addEventListener('keydown', onTap, true);
+  Promise.all([prepared, tapP]).then(function(){
+    t0 = performance.now(); lastT = 0; requestAnimationFrame(frame);
   });
 }
 boot();
