@@ -16,6 +16,8 @@ The site opens on a cover and an introduction, with two chapters from the conten
 Some small touches:
 
 - Click or tap anywhere, on any screen, for a burst of petals. They fly out in front of the page and then drift in behind it.
+- Every screen has its own address: the root (cover), `main-page/` (introduction), `main-page/chapter-one/` and `main-page/chapter-two/`. GitHub Pages is static, so the tiny `index.html` stubs in those folders (and `404.html`, for a missing trailing slash) just redirect to the root page with `?view=...`, which then shows the right screen and tidies the address.
+- Chapter 2 waits for a click or tap before it starts.
 - There are no on-screen back buttons. The browser's or phone's own Back and Forward move between the screens, each with its own transition.
 - The layout adapts to phones: the photo stacks above the words, and the letter sits below the rose.
 - The page asks search engines not to index it (`robots.txt` and a robots meta tag).

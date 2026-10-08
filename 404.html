@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="color-scheme" content="light" />
+<title>Arief &amp; Herlina Journey</title>
+<script>
+/* GitHub Pages serves this for any unknown path. Known screens requested
+   without their trailing slash are routed to the right view; anything else
+   goes to the site root. The root is derived from the path, not hard-coded. */
+function routeFor(pathname, search) {
+  var m = /^(.*\/)main-page(?:\/chapter-(one|two))?\/*$/.exec(pathname);
+  if (m) {
+    var view = m[2] === 'one' ? 'present' : m[2] === 'two' ? 'butterfly' : 'greeting';
+    return m[1] + '?view=' + view;
+  }
+  if (/[?&]lost=1\b/.test(search)) return null;           // already tried: stop, no loop
+  // Project site (user.github.io/repo/...): the first segment is the root.
+  var seg = /^\/([^\/]+)\//.exec(pathname);
+  var root = seg && /\.github\.io$/.test(location.hostname) ? '/' + seg[1] + '/' : '/';
+  return root + '?lost=1';
+}
+(function () {
+  var to = routeFor(location.pathname, location.search);
+  if (to) location.replace(to);
+})();
+</script>
+</head>
+<body style="background:#f3ede3;font-family:Georgia,serif;color:#5e1a20;text-align:center;padding:20vh 16px 0">
+<p>That page is not part of the story.</p>
+<noscript><p><a href="/">Back to the beginning</a></p></noscript>
+</body>
+</html>
